@@ -53,6 +53,18 @@
               [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 20) cornerRadius:10],
              nil];
     
+    /*
+    _paths = [NSArray arrayWithObjects:
+              [self plusSignPathWithCentre:CGPointMake(middle.x - 20, middle.y - 20) scale:40],
+              [UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 50, middle.y - 50, 100, 100)],
+              nil];
+*/
+    /*
+    _paths = [NSArray arrayWithObjects:
+              [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 20) cornerRadius:10],
+              [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200) cornerRadius:15],
+              nil];
+*/
     
     [NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(morphToNextPath) userInfo:nil repeats:YES];
     
@@ -63,6 +75,7 @@
 
 -(void)morphToNextPath{
     
+    /*
     UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
     int nextIndex = _pathNum+1;
     if (nextIndex >= _paths.count) {
@@ -77,9 +90,9 @@
     if (_pathNum >= _paths.count) {
         _pathNum = 0;
     }
+    */
     
     
-    /*
     UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
     
     int newPathNum;
@@ -92,7 +105,7 @@
     [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1];
     
     _pathNum = newPathNum;
-*/
+
     
     
     

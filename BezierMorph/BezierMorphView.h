@@ -50,6 +50,8 @@ typedef enum : NSUInteger {
 
 // Bezier Morph View
 @interface BezierMorphView : UIView
+@property float accuracy;
+@property int lengthSamplingDivisions;
 
 
 -(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration;

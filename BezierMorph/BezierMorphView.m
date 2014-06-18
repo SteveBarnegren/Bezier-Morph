@@ -10,6 +10,8 @@
 
 #define kNumSegmentsPerPoint 100
 
+#define kDefaultLengthSamplingDivisions 10
+
 
 #pragma mark UIBezierPath Extension
 @implementation UIBezierPath (Morph)
@@ -126,6 +128,8 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     double _startTime;
     float _morphDuration;
     float _morphPct;
+    
+    BOOL _usingReversedConnections; //if we actually need to morph from path2 to path1
 }
 
 -(id)initWithFrame:(CGRect)frame{
@@ -136,6 +140,9 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         _morphTimer = nil;
         _morphDuration = 0;
         _morphPct = 0;
+        _usingReversedConnections = YES;
+        _accuracy = 1;
+        _lengthSamplingDivisions = kDefaultLengthSamplingDivisions;
     }
     return self;
 }
@@ -160,8 +167,9 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     
     for (PointConnection *connection in _connectionsArray) {
         
-        CGPoint p1 = connection.p1;
-        CGPoint p2 = connection.p2;
+        
+        CGPoint p1 = _usingReversedConnections?connection.p2:connection.p1;
+        CGPoint p2 = _usingReversedConnections?connection.p1:connection.p2;
         
         float xDiff = p2.x - p1.x;
         float yDiff = p2.y - p1.y;
@@ -196,9 +204,22 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     
     NSMutableArray *connectionsArray = [[NSMutableArray alloc]init];
     
+    // always morph from the path with the most points to the one with the least points
+    // swap them round here if need be
+    if (path1.count < path2.count) {
+        NSMutableArray *tempPath = path1;
+        path1 = path2;
+        path2 = tempPath;
+        _usingReversedConnections = YES;
+    }
+    else{
+        _usingReversedConnections = NO;
+    }
+
+    
     int path1Count = path1.count;
     int path2Count = path2.count;
-    
+
     // roatate the second path so that the points match up as much as possible
     
     {
@@ -219,7 +240,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             index++;
             
         }
-        
+
         // rearrange the array
         int newStartIndex = closestIndex;
         NSLog(@"new start index = %i", newStartIndex);
@@ -253,7 +274,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         // get the corresponding point in the other path at the correct ratio
         int correspondingIndex = index*ratio;
         NSValue *correspondingPoint = [path2 objectAtIndex:correspondingIndex];
-        NSLog(@"CONNECTION (%f, %f) %i  <-->  %i (%f, %f)",value.CGPointValue.x, value.CGPointValue.y, index, (int)(index*ratio), correspondingPoint.CGPointValue.x, correspondingPoint.CGPointValue.y );
+       // NSLog(@"CONNECTION (%f, %f) %i  <-->  %i (%f, %f)",value.CGPointValue.x, value.CGPointValue.y, index, (int)(index*ratio), correspondingPoint.CGPointValue.x, correspondingPoint.CGPointValue.y );
         
         PointConnection *connection = [[PointConnection alloc]init];
         connection.p1 = value.CGPointValue;
@@ -330,7 +351,9 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         }
         else if (point.curveType == kCurveToPoint){
             BezierPoint *prevPoint = [points objectAtIndex:index-1];
-            NSArray *segPointsArray = calculatePointsOnCubicBezier(prevPoint.loc, point.loc, point.cp1, point.cp2, kNumSegmentsPerPoint);
+            //NSArray *segPointsArray = calculatePointsOnCubicBezier(prevPoint.loc, point.loc, point.cp1, point.cp2);
+            NSArray *segPointsArray = [self calculatePointsOnCubicBezierWithOrigin:prevPoint.loc c1:point.cp1 c2:point.cp2 destination:point.loc];
+
             for (NSValue *value in segPointsArray) {
                 [segmentPoints addObject:value];
                 }
@@ -373,7 +396,10 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 
 -(NSMutableArray*)calculateAllPointsOnLinep1:(CGPoint)p1 p2:(CGPoint)p2{
     
-    const int numSamples = kNumSegmentsPerPoint;
+    // num samples is the length
+    int numSamples = sqrt(((p2.x-p1.x) * (p2.x-p1.x)) + ((p2.y-p1.y) * (p2.y-p1.y)));
+    numSamples = (float)numSamples * _accuracy;
+    
     NSMutableArray *array = [[NSMutableArray alloc]initWithCapacity:numSamples];
     
     for (int i = 0; i < numSamples; i++) {
@@ -394,7 +420,33 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 
 -(NSMutableArray*)calculateAllPointsOnQuadBezier:(BezierPoint*)point previousPoint:(BezierPoint*)destPoint{
     
-    const int numSamples = kNumSegmentsPerPoint;
+    // calculate length
+    double length = 0;
+    
+    CGPoint prevPoint;
+    BOOL firstPoint = YES;
+    
+    
+    for (int i = 0; i < _lengthSamplingDivisions; i++) {
+        
+        float t = (1.0f/_lengthSamplingDivisions) * i;
+        float x = (1 - t) * (1 - t) * point.loc.x + 2 * (1 - t) * t * point.cp1.x + t * t * destPoint.loc.x;
+        float y = (1 - t) * (1 - t) * point.loc.y + 2 * (1 - t) * t * point.cp1.y + t * t * destPoint.loc.y;
+    
+        if (!firstPoint) {
+            length += sqrt(((x-prevPoint.x) * (x-prevPoint.x)) + ((y-prevPoint.y) * (y-prevPoint.y)));
+        }
+        
+        
+        prevPoint = CGPointMake(x, y);
+        firstPoint = NO;
+    
+    
+    }
+
+
+    int numSamples = (int)length;
+    numSamples = (float)numSamples * _accuracy;
     NSMutableArray *array = [[NSMutableArray alloc]initWithCapacity:numSamples];
 
     for (int i = 0; i < numSamples; i++) {
@@ -409,11 +461,46 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         return array;
 }
 
-NSArray* calculatePointsOnCubicBezier(CGPoint origin, CGPoint destination, CGPoint control1, CGPoint control2, int segments){
+//NSArray* calculatePointsOnCubicBezier(CGPoint origin, CGPoint destination, CGPoint control1, CGPoint control2){
+    
+-(NSArray*)calculatePointsOnCubicBezierWithOrigin:(CGPoint)origin c1:(CGPoint)control1 c2:(CGPoint)control2 destination:(CGPoint)destination{
+    
+    float t;
+    int segments = 100;
+    
+    // calculate length
+    double length = 0;
+    
+    CGPoint prevPoint;
+    BOOL firstPoint = YES;
+    
+    t = 0;
+    for (int i = 0; i < _lengthSamplingDivisions; i++) {
+
+        float x = powf(1 - t, 3) * origin.x + 3.0f * powf(1 - t, 2) * t * control1.x + 3.0f * (1 - t) * t * t * control2.x + t * t * t * destination.x;
+        float y = powf(1 - t, 3) * origin.y + 3.0f * powf(1 - t, 2) * t * control1.y + 3.0f * (1 - t) * t * t * control2.y + t * t * t * destination.y;
+        t += 1.0f / _lengthSamplingDivisions;
+
+        if (!firstPoint) {
+            length += sqrt(((x-prevPoint.x) * (x-prevPoint.x)) + ((y-prevPoint.y) * (y-prevPoint.y)));
+        }
+        
+        
+        prevPoint = CGPointMake(x, y);
+        firstPoint = NO;
+        
+        
+    }
+     
+     segments = (int)length;
+     //segments = (float)segments * _accuracy;
+
+    
+    NSLog(@"NUM SEGMENTS = %i", segments);
     
     CGPoint vertices[segments + 1];
     
-    float t = 0;
+    t = 0; // reuse t from above
     for(NSUInteger i = 0; i < segments; i++)
     {
         vertices[i].x = powf(1 - t, 3) * origin.x + 3.0f * powf(1 - t, 2) * t * control1.x + 3.0f * (1 - t) * t * t * control2.x + t * t * t * destination.x;
