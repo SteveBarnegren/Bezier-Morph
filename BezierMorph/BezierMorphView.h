@@ -8,6 +8,14 @@
 
 #import <UIKit/UIKit.h>
 
+/*
+ 
+ - Draw all Shapes anti-clockwise
+ 
+ */
+
+
+
 typedef enum : NSUInteger {
     kMoveToPoint,
     kLineToPoint,
@@ -33,8 +41,18 @@ typedef enum : NSUInteger {
 @property CGPoint cp2;
 @end
 
+// Point connection
+@interface PointConnection : NSObject
+@property CGPoint p1;
+@property CGPoint p2;
+@end
+
 
 // Bezier Morph View
 @interface BezierMorphView : UIView
+
+
+-(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration;
+
 
 @end

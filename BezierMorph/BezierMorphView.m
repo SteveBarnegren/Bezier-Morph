@@ -8,6 +8,8 @@
 
 #import "BezierMorphView.h"
 
+#define kNumSegmentsPerPoint 100
+
 
 #pragma mark UIBezierPath Extension
 @implementation UIBezierPath (Morph)
@@ -108,60 +110,240 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 }
 @end
 
+#pragma mark Point Connection
 
+@implementation PointConnection
+@end
 
-@implementation BezierMorphView
+#pragma mark Bezier Morph View
+
+@implementation BezierMorphView{
+    
+    NSMutableArray *_connectionsArray;
+    UIBezierPath *_currentPath;
+    
+    NSTimer *_morphTimer;
+    double _startTime;
+    float _morphDuration;
+    float _morphPct;
+}
 
 -(id)initWithFrame:(CGRect)frame{
     
     if (self = [super initWithFrame:frame]) {
         self.backgroundColor = [UIColor whiteColor];
+        _connectionsArray = nil;
+        _morphTimer = nil;
+        _morphDuration = 0;
+        _morphPct = 0;
     }
     return self;
 }
+
+
+
+
+
 
 -(void)drawRect:(CGRect)rect{
     
     [super drawRect:rect];
     
-/*
-    UIBezierPath *bezierPath = [[UIBezierPath alloc]init];
-    [bezierPath moveToPoint:CGPointMake(0, 0)];
-    [bezierPath addQuadCurveToPoint:CGPointMake(300, 300) controlPoint:CGPointMake(100, 200)];
- */
+    if (_connectionsArray == nil) {
+        return;
+    }
     
-    UIBezierPath *bezierPath = [UIBezierPath bezierPathWithRect:CGRectMake(40, 40, 200, 200)];
-       
+    UIBezierPath *path = [[UIBezierPath alloc]init];
     
-    NSMutableArray *points = [bezierPath getAllPoints];
     
+    BOOL isFirstPoint = YES;
+    
+    for (PointConnection *connection in _connectionsArray) {
+        
+        CGPoint p1 = connection.p1;
+        CGPoint p2 = connection.p2;
+        
+        float xDiff = p2.x - p1.x;
+        float yDiff = p2.y - p1.y;
+        
+        CGPoint p = CGPointMake(p1.x + (xDiff * _morphPct), p1.y + (yDiff * _morphPct));
+        
+        if (isFirstPoint) {
+            [path moveToPoint:p];
+            isFirstPoint = NO;
+
+        }
+        else{
+            [path addLineToPoint:p];
+        }
+    }
+    path.miterLimit = 0;
+    //path.lineJoinStyle = kCGLineJoinBevel;
+    [path closePath];
+    
+    // fill grey
+    UIColor *fillColour = [UIColor colorWithRed:0 green: 0 blue:0 alpha:0.1];
+    [fillColour set];
+    [path fill];
+    
+    // stroke black
+    [[UIColor blackColor]set];
+    [path stroke];
+
+}
+
+-(NSMutableArray*)createConnectionsBetweenPathArraysPath1:(NSMutableArray*)path1 path2:(NSMutableArray*)path2{
+    
+    NSMutableArray *connectionsArray = [[NSMutableArray alloc]init];
+    
+    int path1Count = path1.count;
+    int path2Count = path2.count;
+    
+    // roatate the second path so that the points match up as much as possible
+    
+    {
+        int closestIndex = 0;
+        double closestDist = 10000;
+        
+        CGPoint p1StartLoc = ((NSValue*)[path1 firstObject]).CGPointValue;
+        
+        int index = 0;
+        for (NSValue *value in path2) {
+            CGPoint point = value.CGPointValue;
+            double distance = calculatePointsDistance(p1StartLoc, point);
+            if (distance < closestDist) {
+                closestDist = distance;
+                closestIndex = index;
+            }
+            
+            index++;
+            
+        }
+        
+        // rearrange the array
+        int newStartIndex = closestIndex;
+        NSLog(@"new start index = %i", newStartIndex);
+        
+        // create a new array
+        NSMutableArray *newArray = [[NSMutableArray alloc]init];
+        int i = newStartIndex;
+        do {
+            [newArray addObject:[path2 objectAtIndex:i]];
+            // increment to the next Index
+            i++;
+            if (i >= path2.count) {
+                i = 0;
+            }
+            
+        } while (i != newStartIndex);
+        path2 = newArray;
+    }
+     
+
+    NSLog(@"path1 points: %i", path1Count);
+    NSLog(@"path2 points: %i", path2Count);
+    
+    float ratio = (float)path2.count/(float)path1.count;
+    
+    NSLog(@"ratio = %f", ratio);
+    
+    int index = 0;
+    
+    for (NSValue *value in path1) {
+        // get the corresponding point in the other path at the correct ratio
+        int correspondingIndex = index*ratio;
+        NSValue *correspondingPoint = [path2 objectAtIndex:correspondingIndex];
+        NSLog(@"CONNECTION (%f, %f) %i  <-->  %i (%f, %f)",value.CGPointValue.x, value.CGPointValue.y, index, (int)(index*ratio), correspondingPoint.CGPointValue.x, correspondingPoint.CGPointValue.y );
+        
+        PointConnection *connection = [[PointConnection alloc]init];
+        connection.p1 = value.CGPointValue;
+        connection.p2 = correspondingPoint.CGPointValue;
+        [connectionsArray addObject:connection];
+        
+        index++;
+        
+    }
+
+    return connectionsArray;
+  
+}
+
+
+-(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration{
+    
+    _morphDuration = duration;
+    _morphPct = 0;
+    
+    //UIBezierPath *path1 = [UIBezierPath bezierPathWithOvalInRect:CGRectMake(40, 40, 200, 200)];
+    NSMutableArray *path1Points = [self segmentPointsForBezierPath:path1];
+    //UIBezierPath *path2 = [UIBezierPath bezierPathWithRoundedRect:CGRectMake(40, 40, 200, 200) cornerRadius:5];
+    NSMutableArray *path2Points = [self segmentPointsForBezierPath:path2];
+    
+    _connectionsArray = [self createConnectionsBetweenPathArraysPath1:path1Points path2:path2Points];
+    
+    NSLog(@"%i connections", _connectionsArray.count);
+    
+    _morphTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(morphTick) userInfo:nil repeats:YES];
+    _startTime = CACurrentMediaTime();
+
+}
+
+-(void)morphTick{
+    //NSLog(@"current time = %f", _startTime);
+    
+    double elapsedTime = CACurrentMediaTime() - _startTime;
+    _morphPct = elapsedTime/_morphDuration;
+    
+    if (_morphPct >=1) {
+        [_morphTimer invalidate];
+        _morphTimer = nil;
+        _morphPct = 1;
+    }
+
+    [self setNeedsDisplay];
+}
+
+
+
+#pragma mark obtaining points on lines
+
+-(NSMutableArray*)segmentPointsForBezierPath:(UIBezierPath*)path{
+   
+    NSMutableArray *points = [path getAllPoints];
     
     // draw the path with just lines between close points
     int index = 0;
     
+    NSMutableArray *segmentPoints = [[NSMutableArray alloc]init];
+    
     for (BezierPoint *point in points) {
         
         if (point.curveType == kMoveToPoint) {
+            // do nothing
         }
         else if (point.curveType == kLineToPoint){
             BezierPoint *prevPoint = [points objectAtIndex:index-1];
             NSMutableArray *segPointsArray = [self calculateAllPointsOnLinep1:prevPoint.loc p2:point.loc]; // just draw the dots so that we know they're correct
             for (NSValue *value in segPointsArray) {
-                CGPoint point = [value CGPointValue];
-                [self debugDrawDotAt:point];
-            }
+                [segmentPoints addObject:value];
+                }
         }
         else if (point.curveType == kCurveToPoint){
+            BezierPoint *prevPoint = [points objectAtIndex:index-1];
+            NSArray *segPointsArray = calculatePointsOnCubicBezier(prevPoint.loc, point.loc, point.cp1, point.cp2, kNumSegmentsPerPoint);
+            for (NSValue *value in segPointsArray) {
+                [segmentPoints addObject:value];
+                }
+            
         }
         else if (point.curveType == kQuadCurveToPoint){
-        
+            
             BezierPoint *prevPoint = [points objectAtIndex:index-1];
             NSMutableArray *segPointsArray = [self calculateAllPointsOnQuadBezier:point previousPoint:prevPoint];
             // just draw the dots so that we know they're correct
             for (NSValue *value in segPointsArray) {
-                CGPoint point = [value CGPointValue];
-                [self debugDrawDotAt:point];
-            }
+                [segmentPoints addObject:value];
+                }
         }
         else if (point.curveType == kCloseSubpath){
             NSLog(@"draw close subpath");
@@ -171,9 +353,8 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             NSMutableArray *segPointsArray =  [self calculateAllPointsOnLinep1:previousLoc p2:firstLoc];
             // just draw the dots so that we know they're correct
             for (NSValue *value in segPointsArray) {
-                CGPoint point = [value CGPointValue];
-                [self debugDrawDotAt:point];
-            }
+                [segmentPoints addObject:value];
+                }
         }
         
         // increment
@@ -181,15 +362,18 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         
     }
     
-   // [self reconstructOriginalUIBezierPathFromBezierPointsAndDraw:points];
+    NSLog(@"num segments points = %i", segmentPoints.count);
+    
+    return segmentPoints;
     
 }
 
-#pragma mark obtaining points on lines
+
+
 
 -(NSMutableArray*)calculateAllPointsOnLinep1:(CGPoint)p1 p2:(CGPoint)p2{
     
-    const int numSamples = 1000;
+    const int numSamples = kNumSegmentsPerPoint;
     NSMutableArray *array = [[NSMutableArray alloc]initWithCapacity:numSamples];
     
     for (int i = 0; i < numSamples; i++) {
@@ -210,7 +394,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 
 -(NSMutableArray*)calculateAllPointsOnQuadBezier:(BezierPoint*)point previousPoint:(BezierPoint*)destPoint{
     
-    const int numSamples = 1000;
+    const int numSamples = kNumSegmentsPerPoint;
     NSMutableArray *array = [[NSMutableArray alloc]initWithCapacity:numSamples];
 
     for (int i = 0; i < numSamples; i++) {
@@ -223,6 +407,39 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     }
     
         return array;
+}
+
+NSArray* calculatePointsOnCubicBezier(CGPoint origin, CGPoint destination, CGPoint control1, CGPoint control2, int segments){
+    
+    CGPoint vertices[segments + 1];
+    
+    float t = 0;
+    for(NSUInteger i = 0; i < segments; i++)
+    {
+        vertices[i].x = powf(1 - t, 3) * origin.x + 3.0f * powf(1 - t, 2) * t * control1.x + 3.0f * (1 - t) * t * t * control2.x + t * t * t * destination.x;
+        vertices[i].y = powf(1 - t, 3) * origin.y + 3.0f * powf(1 - t, 2) * t * control1.y + 3.0f * (1 - t) * t * t * control2.y + t * t * t * destination.y;
+        t += 1.0f / segments;
+    }
+    vertices[segments] = CGPointMake(destination.x, destination.y);
+    
+    // put it all in an array
+    NSMutableArray *points = [[NSMutableArray alloc]init];
+    for (int i = 0; i < segments; i++) {
+        [points addObject:[NSValue valueWithCGPoint:vertices[i]]];
+    }
+    return points;
+    
+}
+
+float calculatePointsDistance(CGPoint p1, CGPoint p2){
+    
+    float xDist = p1.x - p2.x;
+    float yDist = p1.y - p2.y;
+    
+    float dist = sqrtf((xDist*xDist)+(yDist*yDist));
+    dist = fabs(dist);
+    
+    return dist;
 }
 
 
