@@ -14,8 +14,7 @@
  
  */
 
-
-
+// Does this need to be in header?
 typedef enum : NSUInteger {
     kMoveToPoint,
     kLineToPoint,
@@ -24,9 +23,34 @@ typedef enum : NSUInteger {
     kCloseSubpath,
 } e_CurveType;
 
+// Change these so that they all use a common prefix (enum type name, and options)
+typedef enum : NSUInteger {
+    kMorphingBezierTimingFunctionLinear,
+    // Sine
+    kMorphingBezierTimingFunctionSineIn,
+    kMorphingBezierTimingFunctionSineOut,
+    kMorphingBezierTimingFunctionSineInOut,
+    // Exponential
+    kMorphingBezierTimingFunctionExponentialIn,
+    kMorphingBezierTimingFunctionExponentialOut,
+    kMorphingBezierTimingFunctionExponentialInOut,
+    // Back
+    kMorphingBezierTimingFunctionBackIn,
+    kMorphingBezierTimingFunctionBackOut,
+    kMorphingBezierTimingFunctionBackInOut,
+    // Bounce
+    kMorphingBezierTimingFunctionBounceIn,
+    kMorphingBezierTimingFunctionBounceOut,
+    kMorphingBezierTimingFunctionBounceInOut,
+    // Elastic
+    kMorphingBezierTimingFunctionElasticIn,
+    kMorphingBezierTimingFunctionElasticOut,
+    kMorphingBezierTimingFunctionElasticInOut
+} e_MorphingBezierTimingFunction;
 
 
 
+// Do these extensions really need to go in header?
 
 // Bezier Extension
 @interface UIBezierPath (Morph)
@@ -49,12 +73,22 @@ typedef enum : NSUInteger {
 
 
 // Bezier Morph View
+
+typedef void (^DrawBlock)(UIBezierPath *path, float t);
+
 @interface BezierMorphView : UIView
 @property float accuracy;
 @property int lengthSamplingDivisions;
 
 
+// Morphing
+-(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration timingFunc:(e_MorphingBezierTimingFunction)tf;
 -(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration;
+
+// Morphing With Draw Block
+-(void)morphFromPath:(UIBezierPath *)path1 toPath:(UIBezierPath *)path2 duration:(float)duration timingFunc:(e_MorphingBezierTimingFunction)tf drawBlock:(DrawBlock)drawBlock;
+
+
 
 
 @end

@@ -31,7 +31,7 @@
     
     _bezierMorphView = [[BezierMorphView alloc]initWithFrame:self.view.frame];
     [self.view addSubview:_bezierMorphView];
-    
+
     CGPoint middle = CGPointMake(self.view.frame.size.width/2, self.view.frame.size.height/2);
     CGPoint topLeft = CGPointMake(middle.x - 100, middle.y - 100);
     CGPoint topRight = CGPointMake(middle.x + 100, middle.y + 100);
@@ -75,6 +75,8 @@
 
 -(void)morphToNextPath{
     
+    // basic sequential
+    
     /*
     UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
     int nextIndex = _pathNum+1;
@@ -92,7 +94,8 @@
     }
     */
     
-    
+    // basic random
+    /*
     UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
     
     int newPathNum;
@@ -105,14 +108,52 @@
     [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1];
     
     _pathNum = newPathNum;
+*/
+    
+    // block based
+    
+   
+     UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
+     
+     int newPathNum;
+     do {
+     newPathNum = arc4random() % _paths.count;
+     } while (newPathNum == _pathNum);
+     
+     UIBezierPath *path2 =[_paths objectAtIndex:newPathNum];
+    
+    static BOOL onColour1 = YES;
+    onColour1 = !onColour1;
+     
+     [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1 timingFunc:kMorphingBezierTimingFunctionElasticOut drawBlock:^(UIBezierPath *path, float t) {
+         
+         UIColor *colour1 = [UIColor colorWithRed:1*t green:0 blue:1-(1*t) alpha:1];
+         UIColor *colour2 = [UIColor colorWithRed:1-(1*t) green:0 blue:1*t alpha:1];
+       
+         [(onColour1?colour1:colour2)set];
+         
+         [path fill];
 
+         [(onColour1?colour2:colour1)set];
+         
+         // draw shadows
+         CGContextRef context = UIGraphicsGetCurrentContext();
+         CGContextAddPath(context, path.CGPath);
+         CGContextSetLineWidth(context, 2.0);
+         CGContextSetBlendMode(context, kCGBlendModeNormal);
+         CGContextSetShadowWithColor(context, CGSizeMake(1.0, 1.0), 2.0, [UIColor blackColor].CGColor);
+         CGContextStrokePath(context);
+         
+       
+     }];
+    
+     
+     _pathNum = newPathNum;
+   
     
     
     
 }
-
-
-
 
 - (void)didReceiveMemoryWarning
 {

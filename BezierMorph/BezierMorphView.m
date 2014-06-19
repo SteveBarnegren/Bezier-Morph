@@ -13,6 +13,11 @@
 #define kDefaultLengthSamplingDivisions 10
 
 
+
+#define M_PI_X_2 (float)M_PI * 2.0f
+
+
+
 #pragma mark UIBezierPath Extension
 @implementation UIBezierPath (Morph)
 
@@ -130,6 +135,17 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     float _morphPct;
     
     BOOL _usingReversedConnections; //if we actually need to morph from path2 to path1
+    
+    float _period; // precalculated for use in ease functions
+    e_MorphingBezierTimingFunction _timingFunction;
+    
+    // drawing
+    BOOL _useBlockDrawing;
+    DrawBlock _drawBlock;
+
+    
+    
+    
 }
 
 -(id)initWithFrame:(CGRect)frame{
@@ -143,6 +159,15 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         _usingReversedConnections = YES;
         _accuracy = 1;
         _lengthSamplingDivisions = kDefaultLengthSamplingDivisions;
+        
+        _timingFunction = kMorphingBezierTimingFunctionBounceOut;
+        _period = 0.3f * 1.5f; // 0.3?
+        
+        _useBlockDrawing = NO;
+        
+        
+        
+        
     }
     return self;
 }
@@ -156,25 +181,27 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     
     [super drawRect:rect];
     
+    // don't draw if there's no path
     if (_connectionsArray == nil) {
         return;
     }
     
+    // apply the timing function
+    float t = [self applyTimingFuction:_timingFunction toTime:_morphPct];
+
+    // construct the path
     UIBezierPath *path = [[UIBezierPath alloc]init];
-    
-    
     BOOL isFirstPoint = YES;
     
     for (PointConnection *connection in _connectionsArray) {
-        
-        
+    
         CGPoint p1 = _usingReversedConnections?connection.p2:connection.p1;
         CGPoint p2 = _usingReversedConnections?connection.p1:connection.p2;
         
         float xDiff = p2.x - p1.x;
         float yDiff = p2.y - p1.y;
         
-        CGPoint p = CGPointMake(p1.x + (xDiff * _morphPct), p1.y + (yDiff * _morphPct));
+        CGPoint p = CGPointMake(p1.x + (xDiff * t), p1.y + (yDiff * t));
         
         if (isFirstPoint) {
             [path moveToPoint:p];
@@ -188,17 +215,25 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     path.miterLimit = 0;
     //path.lineJoinStyle = kCGLineJoinBevel;
     [path closePath];
+  
     
-    // fill grey
-    UIColor *fillColour = [UIColor colorWithRed:0 green: 0 blue:0 alpha:0.1];
-    [fillColour set];
-    [path fill];
-    
-    // stroke black
-    [[UIColor blackColor]set];
-    [path stroke];
-
-}
+    if (!_useBlockDrawing) {
+        // fill grey
+        UIColor *fillColour = [UIColor colorWithRed:0 green: 0 blue:0 alpha:0.1];
+        [fillColour set];
+        [path fill];
+        
+        // stroke black
+        [[UIColor blackColor]set];
+        [path stroke];
+    }
+    else{
+        
+        _drawBlock(path, t);
+        
+        
+    }
+ }
 
 -(NSMutableArray*)createConnectionsBetweenPathArraysPath1:(NSMutableArray*)path1 path2:(NSMutableArray*)path2{
     
@@ -289,6 +324,27 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
   
 }
 
+-(void)morphTick{
+    //NSLog(@"current time = %f", _startTime);
+    
+    double elapsedTime = CACurrentMediaTime() - _startTime;
+    _morphPct = elapsedTime/_morphDuration;
+    
+    if (_morphPct >=1) {
+        [_morphTimer invalidate];
+        _morphTimer = nil;
+        _morphPct = 1;
+    }
+    
+    [self setNeedsDisplay];
+}
+
+-(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration timingFunc:(e_MorphingBezierTimingFunction)tf{
+    
+    [self morphFromPath:path1 toPath:path2 duration:duration];
+    _timingFunction = tf;
+
+}
 
 -(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration{
     
@@ -306,25 +362,18 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     
     _morphTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(morphTick) userInfo:nil repeats:YES];
     _startTime = CACurrentMediaTime();
+    
+    _useBlockDrawing = NO;
 
 }
 
--(void)morphTick{
-    //NSLog(@"current time = %f", _startTime);
+-(void)morphFromPath:(UIBezierPath *)path1 toPath:(UIBezierPath *)path2 duration:(float)duration timingFunc:(e_MorphingBezierTimingFunction)tf drawBlock:(DrawBlock)drawBlock{
     
-    double elapsedTime = CACurrentMediaTime() - _startTime;
-    _morphPct = elapsedTime/_morphDuration;
+    [self morphFromPath:path1 toPath:path2 duration:duration timingFunc:tf];
+    _drawBlock = drawBlock;
+    _useBlockDrawing = YES;
     
-    if (_morphPct >=1) {
-        [_morphTimer invalidate];
-        _morphTimer = nil;
-        _morphPct = 1;
-    }
-
-    [self setNeedsDisplay];
 }
-
-
 
 #pragma mark obtaining points on lines
 
@@ -530,6 +579,267 @@ float calculatePointsDistance(CGPoint p1, CGPoint p2){
 }
 
 
+#pragma mark Ease Time Manipulation
+
+-(float)applyTimingFuction:(e_MorphingBezierTimingFunction)easeFuction toTime:(float)t{
+    
+    switch (_timingFunction) {
+            // Linear
+        case kMorphingBezierTimingFunctionLinear:
+            t = _morphPct;
+            break;
+            // Sine
+        case kMorphingBezierTimingFunctionSineIn:
+            t = [self easeSineIn:_morphPct];
+            break;
+        case kMorphingBezierTimingFunctionSineOut:
+            t = [self easeSineOut:_morphPct];
+            break;
+        case kMorphingBezierTimingFunctionSineInOut:
+            t = [self easeSineInOut:_morphPct];
+            break;
+            // Exponential
+        case kMorphingBezierTimingFunctionExponentialIn:
+            t = [self easeExponentialIn:_morphPct];
+            break;
+        case kMorphingBezierTimingFunctionExponentialOut:
+            t = [self easeExponentialOut:_morphPct];
+            break;
+        case kMorphingBezierTimingFunctionExponentialInOut:
+            t = [self easeExponentialInOut:_morphPct];
+            break;
+            // back
+        case kMorphingBezierTimingFunctionBackIn:
+            t = [self easeBackIn:_morphPct];
+            break;
+        case kMorphingBezierTimingFunctionBackOut:
+            t = [self easeBackOut:_morphPct];
+            break;
+        case kMorphingBezierTimingFunctionBackInOut:
+            t = [self easeBackInOut:_morphPct];
+            break;
+            // Bounce
+        case kMorphingBezierTimingFunctionBounceIn:
+            t = [self easeBounceIn:_morphPct];
+            break;
+        case kMorphingBezierTimingFunctionBounceOut:
+            t = [self easeBounceOut:_morphPct];
+            break;
+        case kMorphingBezierTimingFunctionBounceInOut:
+            t = [self easeBounceInOut:_morphPct];
+            break;
+            // Elastic
+        case kMorphingBezierTimingFunctionElasticIn:
+            t = [self easeElasticIn:_morphPct];
+            break;
+        case kMorphingBezierTimingFunctionElasticOut:
+            t = [self easeElasticOut:_morphPct];
+            break;
+        case kMorphingBezierTimingFunctionElasticInOut:
+            t = [self easeElasticInOut:_morphPct];
+            break;
+        default:
+            // should never get called, but default to linear just in case
+            t = _morphPct;
+            break;
+    }
+
+    return t;
+}
+
+// Ease Sine
+
+-(float)easeSineIn:(float)t{
+    
+    NSLog(@"t = %f", t);
+    float newT = -1*cosf(t * (float)M_PI_2) +1;
+    NSLog(@"newT = %f", t);
+
+    return newT;
+}
+
+-(float)easeSineOut:(float)t{
+    
+    return sinf(t * (float)M_PI_2);
+
+}
+
+-(float)easeSineInOut:(float)t{
+    
+    return sinf(t * (float)M_PI_2);
+
+}
+
+// Ease Exponential
+-(float)easeExponentialIn:(float)t{
+ 
+    return (t==0) ? 0 : powf(2, 10 * (t/1 - 1)) - 1 * 0.001f;
+
+}
+
+-(float)easeExponentialOut:(float)t{
+    
+    return (t==1) ? 1 : (-powf(2, -10 * t/1) + 1);
+    
+}
+
+-(float)easeExponentialInOut:(float)t{
+    
+    t /= 0.5f;
+	if (t < 1)
+		t = 0.5f * powf(2, 10 * (t - 1));
+	else
+		t = 0.5f * (-powf(2, -10 * (t -1) ) + 2);
+    
+	return t;
+    
+}
+
+// Ease Back
+
+-(float)easeBackIn:(float)t{
+    
+    double overshoot = 1.70158f;
+	return t * t * ((overshoot + 1) * t - overshoot);
+}
+
+-(float)easeBackOut:(float)t{
+
+    double overshoot = 1.70158f;
+    
+	t = t - 1;
+	return t * t * ((overshoot + 1) * t + overshoot) + 1;
+
+}
+
+-(float)easeBackInOut:(float)t{
+    
+    double overshoot = 1.70158f * 1.525f;
+    
+	t = t * 2;
+	if (t < 1)
+		return (t * t * ((overshoot + 1) * t - overshoot)) / 2;
+	else {
+		t = t - 2;
+		return (t * t * ((overshoot + 1) * t + overshoot)) / 2 + 1;
+	}
+    
+}
+
+// Ease Bounce
+
+-(double) bounceTime:(double) t
+{
+	if (t < 1 / 2.75) {
+		return 7.5625f * t * t;
+	}
+	else if (t < 2 / 2.75) {
+		t -= 1.5f / 2.75f;
+		return 7.5625f * t * t + 0.75f;
+	}
+	else if (t < 2.5 / 2.75) {
+		t -= 2.25f / 2.75f;
+		return 7.5625f * t * t + 0.9375f;
+	}
+    
+	t -= 2.625f / 2.75f;
+	return 7.5625f * t * t + 0.984375f;
+}
+
+-(float)easeBounceIn:(float)t{
+    
+    double newT = t;
+	// prevents rounding errors
+	if( t !=0 && t!=1)
+		newT = 1 - [self bounceTime:1-t];
+    
+	return newT;
+
+}
+
+-(float)easeBounceOut:(float)t{
+    
+    double newT = t;
+	// prevents rounding errors
+	if( t !=0 && t!=1)
+		newT = [self bounceTime:t];
+    
+	return newT;
+
+}
+
+-(float)easeBounceInOut:(float)t{
+    
+    double newT;
+	// prevents possible rounding errors
+	if( t ==0 || t==1)
+		newT = t;
+	else if (t < 0.5) {
+		t = t * 2;
+		newT = (1 - [self bounceTime:1-t] ) * 0.5f;
+	} else
+		newT = [self bounceTime:t * 2 - 1] * 0.5f + 0.5f;
+    
+	return newT;
+
+}
+
+
+// Ease Elastic
+
+-(float)easeElasticIn:(float)t{
+    
+    double newT = 0;
+	if (t == 0 || t == 1)
+		newT = t;
+    
+	else {
+		float s = _period / 4;
+		t = t - 1;
+		newT = -powf(2, 10 * t) * sinf( (t-s) *M_PI_X_2 / _period);
+	}
+	return newT;
+
+}
+
+-(float)easeElasticOut:(float)t{
+    
+    float newT = 0;
+	if (t == 0 || t == 1) {
+		newT = t;
+        
+	} else {
+		float s = _period / 4;
+		newT = powf(2, -10 * t) * sinf( (t-s) *M_PI_X_2 / _period) + 1;
+	}
+    return newT;
+}
+
+-(float)easeElasticInOut:(float)t{
+    
+    double newT = 0;
+    
+	if( t == 0 || t == 1 )
+		newT = t;
+	else {
+		t = t * 2;
+		if(! _period )
+			_period = 0.3f * 1.5f;
+		double s = _period / 4;
+        
+		t = t -1;
+		if( t < 0 )
+			newT = -0.5f * powf(2, 10 * t) * sinf((t - s) * M_PI_X_2 / _period);
+		else
+			newT = powf(2, -10 * t) * sinf((t - s) * M_PI_X_2 / _period) * 0.5f + 1;
+	}
+	return newT;
+    
+}
+
+
+
+
 
 #pragma mark Debug
 
@@ -568,6 +878,8 @@ float calculatePointsDistance(CGPoint p1, CGPoint p2){
     [[UIBezierPath bezierPathWithOvalInRect:rect]fill];
 
 }
+
+
 
 
 
