@@ -22,7 +22,7 @@
 		40F2B43D1950857900723567 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40F2B41C1950857900723567 /* UIKit.framework */; };
 		40F2B4451950857900723567 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 40F2B4431950857900723567 /* InfoPlist.strings */; };
 		40F2B4471950857900723567 /* BezierMorphTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 40F2B4461950857900723567 /* BezierMorphTests.m */; };
-		40F2B452195085E100723567 /* BezierMorphView.m in Sources */ = {isa = PBXBuildFile; fileRef = 40F2B451195085E100723567 /* BezierMorphView.m */; };
+		40F2B452195085E100723567 /* SBMorphingBezierView.m in Sources */ = {isa = PBXBuildFile; fileRef = 40F2B451195085E100723567 /* SBMorphingBezierView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,8 +56,8 @@
 		40F2B4421950857900723567 /* BezierMorphTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "BezierMorphTests-Info.plist"; sourceTree = "<group>"; };
 		40F2B4441950857900723567 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		40F2B4461950857900723567 /* BezierMorphTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BezierMorphTests.m; sourceTree = "<group>"; };
-		40F2B450195085E100723567 /* BezierMorphView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BezierMorphView.h; sourceTree = "<group>"; };
-		40F2B451195085E100723567 /* BezierMorphView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BezierMorphView.m; sourceTree = "<group>"; };
+		40F2B450195085E100723567 /* SBMorphingBezierView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SBMorphingBezierView.h; sourceTree = "<group>"; };
+		40F2B451195085E100723567 /* SBMorphingBezierView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SBMorphingBezierView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,8 +123,8 @@
 				40F2B42D1950857900723567 /* Main_iPad.storyboard */,
 				40F2B4301950857900723567 /* BMViewController.h */,
 				40F2B4311950857900723567 /* BMViewController.m */,
-				40F2B450195085E100723567 /* BezierMorphView.h */,
-				40F2B451195085E100723567 /* BezierMorphView.m */,
+				40F2B450195085E100723567 /* SBMorphingBezierView.h */,
+				40F2B451195085E100723567 /* SBMorphingBezierView.m */,
 				40F2B4331950857900723567 /* Images.xcassets */,
 				40F2B41F1950857900723567 /* Supporting Files */,
 			);
@@ -261,7 +261,7 @@
 			files = (
 				40F2B4321950857900723567 /* BMViewController.m in Sources */,
 				40F2B4251950857900723567 /* main.m in Sources */,
-				40F2B452195085E100723567 /* BezierMorphView.m in Sources */,
+				40F2B452195085E100723567 /* SBMorphingBezierView.m in Sources */,
 				40F2B4291950857900723567 /* BMAppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -477,6 +477,7 @@
 				40F2B44C1950857900723567 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		40F2B44D1950857900723567 /* Build configuration list for PBXNativeTarget "BezierMorphTests" */ = {
 			isa = XCConfigurationList;
@@ -485,6 +486,7 @@
 				40F2B44F1950857900723567 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

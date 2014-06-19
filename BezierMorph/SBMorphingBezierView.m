@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Steven Barnegren. All rights reserved.
 //
 
-#import "BezierMorphView.h"
+#import "SBMorphingBezierView.h"
 
 #define kNumSegmentsPerPoint 100
 
@@ -40,7 +40,6 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     switch(type) {
         case kCGPathElementMoveToPoint: // contains 1 point
             {
-                NSLog(@"move to point");
                 BezierPoint *point = [[BezierPoint alloc]init];
                 point.loc = points[0];
                 point.curveType = kMoveToPoint;
@@ -50,7 +49,6 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             
         case kCGPathElementAddLineToPoint: // contains 1 point
             {
-                NSLog(@"line to point");
                 BezierPoint *point = [[BezierPoint alloc]init];
                 point.loc = points[0];
                 point.curveType = kLineToPoint;
@@ -60,7 +58,6 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             
         case kCGPathElementAddQuadCurveToPoint: // contains 2 points
             {
-                NSLog(@"quad curve to point");
                 BezierPoint *point = [[BezierPoint alloc]init];
                 point.loc = points[1];
                 point.cp1 = points[0];
@@ -71,7 +68,6 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 
         case kCGPathElementAddCurveToPoint: // contains 3 points
             {
-                NSLog(@"curve to point");
                 BezierPoint *point = [[BezierPoint alloc]init];
                 point.cp1 = points[0];
                 point.cp2 = points[1];
@@ -83,7 +79,6 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             
         case kCGPathElementCloseSubpath: // contains no point
             {
-                NSLog(@"close subpath");
                 BezierPoint *point = [[BezierPoint alloc]init];
                 point.curveType = kCloseSubpath;
                 [bezierPoints addObject:point];
@@ -124,7 +119,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 
 #pragma mark Bezier Morph View
 
-@implementation BezierMorphView{
+@implementation SBMorphingBezierView{
     
     NSMutableArray *_connectionsArray;
     UIBezierPath *_currentPath;
@@ -137,21 +132,20 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     BOOL _usingReversedConnections; //if we actually need to morph from path2 to path1
     
     float _period; // precalculated for use in ease functions
-    e_MorphingBezierTimingFunction _timingFunction;
+    SBMorphingBezierTimingFunction _timingFunction;
     
     // drawing
     BOOL _useBlockDrawing;
     DrawBlock _drawBlock;
 
-    
-    
-    
+
 }
 
 -(id)initWithFrame:(CGRect)frame{
     
     if (self = [super initWithFrame:frame]) {
         self.backgroundColor = [UIColor whiteColor];
+        // init ivars
         _connectionsArray = nil;
         _morphTimer = nil;
         _morphDuration = 0;
@@ -160,21 +154,20 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         _accuracy = 1;
         _lengthSamplingDivisions = kDefaultLengthSamplingDivisions;
         
-        _timingFunction = kMorphingBezierTimingFunctionBounceOut;
+        _timingFunction = SBMorphingBezierTimingFunctionSineOut;
+        
         _period = 0.3f * 1.5f; // 0.3?
         
         _useBlockDrawing = NO;
         
-        
-        
-        
+        // drawing properties
+        _strokeWidth = 1.0f;
+        _strokeColour = [UIColor blackColor];
+        _fillColour = [UIColor whiteColor];
+
     }
     return self;
 }
-
-
-
-
 
 
 -(void)drawRect:(CGRect)rect{
@@ -212,19 +205,20 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             [path addLineToPoint:p];
         }
     }
-    path.miterLimit = 0;
+    //path.miterLimit = 0;
     //path.lineJoinStyle = kCGLineJoinBevel;
     [path closePath];
   
     
     if (!_useBlockDrawing) {
-        // fill grey
-        UIColor *fillColour = [UIColor colorWithRed:0 green: 0 blue:0 alpha:0.1];
-        [fillColour set];
+        
+        // fill
+        [_fillColour set];
         [path fill];
         
-        // stroke black
-        [[UIColor blackColor]set];
+        // stroke
+        [_strokeColour set];
+        path.lineWidth = _strokeWidth;
         [path stroke];
     }
     else{
@@ -251,10 +245,6 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         _usingReversedConnections = NO;
     }
 
-    
-    int path1Count = path1.count;
-    int path2Count = path2.count;
-
     // roatate the second path so that the points match up as much as possible
     
     {
@@ -278,7 +268,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 
         // rearrange the array
         int newStartIndex = closestIndex;
-        NSLog(@"new start index = %i", newStartIndex);
+        //NSLog(@"new start index = %i", newStartIndex);
         
         // create a new array
         NSMutableArray *newArray = [[NSMutableArray alloc]init];
@@ -296,12 +286,12 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     }
      
 
-    NSLog(@"path1 points: %i", path1Count);
-    NSLog(@"path2 points: %i", path2Count);
+   // NSLog(@"path1 points: %i", path1Count);
+   // NSLog(@"path2 points: %i", path2Count);
     
     float ratio = (float)path2.count/(float)path1.count;
     
-    NSLog(@"ratio = %f", ratio);
+    //NSLog(@"ratio = %f", ratio);
     
     int index = 0;
     
@@ -339,7 +329,9 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     [self setNeedsDisplay];
 }
 
--(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration timingFunc:(e_MorphingBezierTimingFunction)tf{
+-(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration timingFunc:(SBMorphingBezierTimingFunction)tf{
+    
+    [self stopMorphing];
     
     [self morphFromPath:path1 toPath:path2 duration:duration];
     _timingFunction = tf;
@@ -347,6 +339,8 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 }
 
 -(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration{
+    
+    [self stopMorphing];
     
     _morphDuration = duration;
     _morphPct = 0;
@@ -367,11 +361,20 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 
 }
 
--(void)morphFromPath:(UIBezierPath *)path1 toPath:(UIBezierPath *)path2 duration:(float)duration timingFunc:(e_MorphingBezierTimingFunction)tf drawBlock:(DrawBlock)drawBlock{
+-(void)morphFromPath:(UIBezierPath *)path1 toPath:(UIBezierPath *)path2 duration:(float)duration timingFunc:(SBMorphingBezierTimingFunction)tf drawBlock:(DrawBlock)drawBlock{
+    
+    [self stopMorphing];
     
     [self morphFromPath:path1 toPath:path2 duration:duration timingFunc:tf];
     _drawBlock = drawBlock;
     _useBlockDrawing = YES;
+    
+}
+
+-(void)stopMorphing{
+    
+    [_morphTimer invalidate];
+    _morphTimer = nil;
     
 }
 
@@ -418,7 +421,6 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
                 }
         }
         else if (point.curveType == kCloseSubpath){
-            NSLog(@"draw close subpath");
             //close subpath is a line with no location, just connect the previous point to the first point
             CGPoint previousLoc = ((BezierPoint*)[points objectAtIndex:index-1]).loc;
             CGPoint firstLoc = ((BezierPoint*)[points firstObject]).loc;
@@ -434,7 +436,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         
     }
     
-    NSLog(@"num segments points = %i", segmentPoints.count);
+    //NSLog(@"num segments points = %i", segmentPoints.count);
     
     return segmentPoints;
     
@@ -545,7 +547,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
      //segments = (float)segments * _accuracy;
 
     
-    NSLog(@"NUM SEGMENTS = %i", segments);
+    //NSLog(@"NUM SEGMENTS = %i", segments);
     
     CGPoint vertices[segments + 1];
     
@@ -581,61 +583,61 @@ float calculatePointsDistance(CGPoint p1, CGPoint p2){
 
 #pragma mark Ease Time Manipulation
 
--(float)applyTimingFuction:(e_MorphingBezierTimingFunction)easeFuction toTime:(float)t{
+-(float)applyTimingFuction:(SBMorphingBezierTimingFunction)easeFuction toTime:(float)t{
     
     switch (_timingFunction) {
             // Linear
-        case kMorphingBezierTimingFunctionLinear:
+        case SBMorphingBezierTimingFunctionLinear:
             t = _morphPct;
             break;
             // Sine
-        case kMorphingBezierTimingFunctionSineIn:
+        case SBMorphingBezierTimingFunctionSineIn:
             t = [self easeSineIn:_morphPct];
             break;
-        case kMorphingBezierTimingFunctionSineOut:
+        case SBMorphingBezierTimingFunctionSineOut:
             t = [self easeSineOut:_morphPct];
             break;
-        case kMorphingBezierTimingFunctionSineInOut:
+        case SBMorphingBezierTimingFunctionSineInOut:
             t = [self easeSineInOut:_morphPct];
             break;
             // Exponential
-        case kMorphingBezierTimingFunctionExponentialIn:
+        case SBMorphingBezierTimingFunctionExponentialIn:
             t = [self easeExponentialIn:_morphPct];
             break;
-        case kMorphingBezierTimingFunctionExponentialOut:
+        case SBMorphingBezierTimingFunctionExponentialOut:
             t = [self easeExponentialOut:_morphPct];
             break;
-        case kMorphingBezierTimingFunctionExponentialInOut:
+        case SBMorphingBezierTimingFunctionExponentialInOut:
             t = [self easeExponentialInOut:_morphPct];
             break;
             // back
-        case kMorphingBezierTimingFunctionBackIn:
+        case SBMorphingBezierTimingFunctionBackIn:
             t = [self easeBackIn:_morphPct];
             break;
-        case kMorphingBezierTimingFunctionBackOut:
+        case SBMorphingBezierTimingFunctionBackOut:
             t = [self easeBackOut:_morphPct];
             break;
-        case kMorphingBezierTimingFunctionBackInOut:
+        case SBMorphingBezierTimingFunctionBackInOut:
             t = [self easeBackInOut:_morphPct];
             break;
             // Bounce
-        case kMorphingBezierTimingFunctionBounceIn:
+        case SBMorphingBezierTimingFunctionBounceIn:
             t = [self easeBounceIn:_morphPct];
             break;
-        case kMorphingBezierTimingFunctionBounceOut:
+        case SBMorphingBezierTimingFunctionBounceOut:
             t = [self easeBounceOut:_morphPct];
             break;
-        case kMorphingBezierTimingFunctionBounceInOut:
+        case SBMorphingBezierTimingFunctionBounceInOut:
             t = [self easeBounceInOut:_morphPct];
             break;
             // Elastic
-        case kMorphingBezierTimingFunctionElasticIn:
+        case SBMorphingBezierTimingFunctionElasticIn:
             t = [self easeElasticIn:_morphPct];
             break;
-        case kMorphingBezierTimingFunctionElasticOut:
+        case SBMorphingBezierTimingFunctionElasticOut:
             t = [self easeElasticOut:_morphPct];
             break;
-        case kMorphingBezierTimingFunctionElasticInOut:
+        case SBMorphingBezierTimingFunctionElasticInOut:
             t = [self easeElasticInOut:_morphPct];
             break;
         default:

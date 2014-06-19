@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>31D47746-2AB3-4D4D-BF40-5600C01FAE8D</string>
+	<key>IDESourceControlProjectName</key>
+	<string>BezierMorph</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>8FCA7571-DBC5-40D9-BC52-3C7FB280DC1D</key>
+		<string>https://bitbucket.org/SteveBarnegren/beziermorph.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>BezierMorph.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>8FCA7571-DBC5-40D9-BC52-3C7FB280DC1D</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://bitbucket.org/SteveBarnegren/beziermorph.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>8FCA7571-DBC5-40D9-BC52-3C7FB280DC1D</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>8FCA7571-DBC5-40D9-BC52-3C7FB280DC1D</string>
+			<key>IDESourceControlWCCName</key>
+			<string>BezierMorph</string>
+		</dict>
+	</array>
+</dict>
+</plist>

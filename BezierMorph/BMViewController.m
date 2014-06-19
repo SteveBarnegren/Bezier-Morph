@@ -9,11 +9,11 @@
 //
 
 #import "BMViewController.h"
-#import "BezierMorphView.h"
+#import "SBMorphingBezierView.h"
 
 @interface BMViewController ()
 
-@property(nonatomic, strong) BezierMorphView *bezierMorphView;
+@property(nonatomic, strong) SBMorphingBezierView *bezierMorphView;
 @property(nonatomic, strong) NSArray* paths;
 @property int pathNum;
 @end
@@ -25,18 +25,25 @@
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
     
+    
+    // do the performance test
+    [self performSelector:@selector(doPerformanceTest) withObject:nil afterDelay:5];
+    return;
+    
+    
+    
+    
+    
     _pathNum = 0;
     
     NSLog(@"view did load");
     
-    _bezierMorphView = [[BezierMorphView alloc]initWithFrame:self.view.frame];
+    _bezierMorphView = [[SBMorphingBezierView alloc]initWithFrame:self.view.frame];
     [self.view addSubview:_bezierMorphView];
 
     CGPoint middle = CGPointMake(self.view.frame.size.width/2, self.view.frame.size.height/2);
     CGPoint topLeft = CGPointMake(middle.x - 100, middle.y - 100);
     CGPoint topRight = CGPointMake(middle.x + 100, middle.y + 100);
-    
-    
     
     _paths = [NSArray arrayWithObjects:
               [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200) cornerRadius:15],
@@ -95,7 +102,7 @@
     */
     
     // basic random
-    /*
+    
     UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
     
     int newPathNum;
@@ -108,11 +115,10 @@
     [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1];
     
     _pathNum = newPathNum;
-*/
+
     
-    // block based
-    
-   
+    // block based (with shadow)
+    /*
      UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
      
      int newPathNum;
@@ -147,9 +153,12 @@
        
      }];
     
-     
      _pathNum = newPathNum;
-   
+   */
+    
+    
+    
+    
     
     
     
@@ -226,6 +235,51 @@
     view.backgroundColor = [UIColor blackColor];
     [self.view addSubview:view];
     
+    
+}
+
+-(void)doPerformanceTest{
+    
+    int numTimes = 1000;
+    
+    CGPoint middle = CGPointMake(self.view.frame.size.width/2, self.view.frame.size.height/2);
+    
+    int shapeIndex = 0;
+
+    
+    NSArray *array = [NSArray arrayWithObjects: [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200) cornerRadius:15],
+                                                [UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)],
+                                                [UIBezierPath bezierPathWithRect:CGRectMake(middle.x - 10, middle.y- 100, 20, 200)], nil];
+    
+    
+    
+    SBMorphingBezierView *bezierView = [[SBMorphingBezierView alloc]initWithFrame:self.view.frame];
+    [self.view addSubview:bezierView];
+    
+    double startTime = CACurrentMediaTime();
+    NSLog(@"Starting - %f", startTime);
+    
+    for (int i = 0; i < numTimes; i++) {
+        
+        int prevShapeIndex = shapeIndex - 1;
+        
+        if (prevShapeIndex < 0) {
+            prevShapeIndex = array.count-1;
+        }
+        
+        [bezierView stopMorphing];
+        [bezierView morphFromPath:[array objectAtIndex:prevShapeIndex] toPath:[array objectAtIndex:shapeIndex] duration:10];
+        
+        shapeIndex++;
+        if (shapeIndex >= array.count) {
+            shapeIndex = 0;
+        }
+    }
+    
+    double finishTime = CACurrentMediaTime();
+    NSLog(@"Finished - %f", finishTime);
+    NSLog(@"Time taken - %f", finishTime - startTime);
+
     
 }
 
