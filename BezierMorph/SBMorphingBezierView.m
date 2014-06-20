@@ -24,7 +24,7 @@ typedef enum : NSUInteger {
     kCloseSubpath,
 } e_CurveType;
 
-#pragma mark ---- Private interfaces ----
+#pragma mark ---- Private interfaces (supporting classes) ----
 
 // Bezier Point
 @interface SBBezierPoint : NSObject
@@ -588,16 +588,14 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         }
         else if (point.curveType == kLineToPoint){
             SBBezierPoint *prevPoint = [points objectAtIndex:index-1];
-            NSMutableArray *segPointsArray = [self calculateAllPointsOnLinep1:prevPoint.loc p2:point.loc]; // just draw the dots so that we know they're correct
+            NSMutableArray *segPointsArray = [self calculateAllPointsOnLinep1:prevPoint.loc p2:point.loc];
             for (NSValue *value in segPointsArray) {
                 [segmentPoints addObject:value];
                 }
         }
         else if (point.curveType == kCurveToPoint){
             SBBezierPoint *prevPoint = [points objectAtIndex:index-1];
-            //NSArray *segPointsArray = calculatePointsOnCubicBezier(prevPoint.loc, point.loc, point.cp1, point.cp2);
             NSArray *segPointsArray = [self calculatePointsOnCubicBezierWithOrigin:prevPoint.loc c1:point.cp1 c2:point.cp2 destination:point.loc];
-
             for (NSValue *value in segPointsArray) {
                 [segmentPoints addObject:value];
                 }
@@ -607,7 +605,6 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             
             SBBezierPoint *prevPoint = [points objectAtIndex:index-1];
             NSMutableArray *segPointsArray = [self calculateAllPointsOnQuadBezier:point previousPoint:prevPoint];
-            // just draw the dots so that we know they're correct
             for (NSValue *value in segPointsArray) {
                 [segmentPoints addObject:value];
                 }
@@ -617,7 +614,6 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             CGPoint previousLoc = ((SBBezierPoint*)[points objectAtIndex:index-1]).loc;
             CGPoint firstLoc = ((SBBezierPoint*)[points firstObject]).loc;
             NSMutableArray *segPointsArray =  [self calculateAllPointsOnLinep1:previousLoc p2:firstLoc];
-            // just draw the dots so that we know they're correct
             for (NSValue *value in segPointsArray) {
                 [segmentPoints addObject:value];
                 }

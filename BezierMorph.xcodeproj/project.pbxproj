@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		40528511195491A70096C937 /* UIBezierPath+BezierCreator.m in Sources */ = {isa = PBXBuildFile; fileRef = 40528510195491A70096C937 /* UIBezierPath+BezierCreator.m */; };
 		40F2B4191950857900723567 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40F2B4181950857900723567 /* Foundation.framework */; };
 		40F2B41B1950857900723567 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40F2B41A1950857900723567 /* CoreGraphics.framework */; };
 		40F2B41D1950857900723567 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40F2B41C1950857900723567 /* UIKit.framework */; };
@@ -36,6 +37,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4052850F195491A70096C937 /* UIBezierPath+BezierCreator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIBezierPath+BezierCreator.h"; sourceTree = "<group>"; };
+		40528510195491A70096C937 /* UIBezierPath+BezierCreator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIBezierPath+BezierCreator.m"; sourceTree = "<group>"; };
 		40F2B4151950857900723567 /* BezierMorph.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BezierMorph.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		40F2B4181950857900723567 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		40F2B41A1950857900723567 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -125,6 +128,8 @@
 				40F2B4311950857900723567 /* BMViewController.m */,
 				40F2B450195085E100723567 /* SBMorphingBezierView.h */,
 				40F2B451195085E100723567 /* SBMorphingBezierView.m */,
+				4052850F195491A70096C937 /* UIBezierPath+BezierCreator.h */,
+				40528510195491A70096C937 /* UIBezierPath+BezierCreator.m */,
 				40F2B4331950857900723567 /* Images.xcassets */,
 				40F2B41F1950857900723567 /* Supporting Files */,
 			);
@@ -263,6 +268,7 @@
 				40F2B4251950857900723567 /* main.m in Sources */,
 				40F2B452195085E100723567 /* SBMorphingBezierView.m in Sources */,
 				40F2B4291950857900723567 /* BMAppDelegate.m in Sources */,
+				40528511195491A70096C937 /* UIBezierPath+BezierCreator.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

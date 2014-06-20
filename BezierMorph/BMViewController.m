@@ -10,6 +10,7 @@
 
 #import "BMViewController.h"
 #import "SBMorphingBezierView.h"
+#import "UIBezierPath+BezierCreator.h"
 
 @import CoreText;
 
@@ -68,8 +69,9 @@
     */
     //[NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(morphToNextPath) userInfo:nil repeats:NO];
     
-    [self morphToNextPath];
+    //[self morphToNextPath];
     //[self drawTwoRandomPaths];
+    [self drawMultipleStrokedBeziers];
     
     
     
@@ -285,6 +287,47 @@
     
 }
 
+-(void)drawMultipleStrokedBeziers{
+    
+    UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
+    
+    int newPathNum;
+    do {
+        newPathNum = arc4random() % _paths.count;
+    } while (newPathNum == _pathNum);
+    
+    UIBezierPath *path2 =[_paths objectAtIndex:newPathNum];
+    
+    static BOOL onColour1 = YES;
+    onColour1 = !onColour1;
+    
+    [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1 timingFunc:SBTimingFunctionExponentialInOut drawBlock:^(UIBezierPath *path, float t) {
+        
+        
+        const int numCopies = 5;
+        
+        [[UIColor blackColor]set];
+        [path stroke];
+        for (int i = 0; i < numCopies; i++) {
+            UIBezierPath *pathCopy = [UIBezierPath bezierPathWithScaledBezierPath:path aroundPoint:CGPointMake(self.view.frame.size.width/2, self.view.frame.size.height/2) scale: 1 + (0.1 * i)];
+            [pathCopy stroke];
+            
+            
+            
+        }
+     
+        
+    } completionBlock:^{
+        NSLog(@"complete");
+        [self drawMultipleStrokedBeziers];
+    }];
+    
+    _pathNum = newPathNum;
+  
+}
+
+
+
 
 
 #pragma mark Debug
@@ -341,6 +384,7 @@
 
     
 }
+
 
 
 
