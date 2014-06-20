@@ -147,6 +147,8 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         self.backgroundColor = [UIColor whiteColor];
         // init ivars
         _connectionsArray = nil;
+        
+
         _morphTimer = nil;
         _morphDuration = 0;
         _morphPct = 0;
@@ -352,7 +354,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     
     _connectionsArray = [self createConnectionsBetweenPathArraysPath1:path1Points path2:path2Points];
     
-    NSLog(@"%i connections", _connectionsArray.count);
+    //NSLog(@"%i connections", _connectionsArray.count);
     
     _morphTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(morphTick) userInfo:nil repeats:YES];
     _startTime = CACurrentMediaTime();
@@ -570,7 +572,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 }
 
 float calculatePointsDistance(CGPoint p1, CGPoint p2){
-    
+    /*
     float xDist = p1.x - p2.x;
     float yDist = p1.y - p2.y;
     
@@ -578,6 +580,10 @@ float calculatePointsDistance(CGPoint p1, CGPoint p2){
     dist = fabs(dist);
     
     return dist;
+     */
+    
+    return fabs(sqrtf(((p1.x - p2.x)*(p1.x - p2.x))+((p1.y - p2.y)*(p1.y - p2.y))));
+
 }
 
 
