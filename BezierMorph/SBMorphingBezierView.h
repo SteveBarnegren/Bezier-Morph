@@ -11,92 +11,66 @@
 /*
  
  - Draw all Shapes anti-clockwise
+ - 10% saving with _matchShapeRotations = NO and _adjustForCentreOffset = NO;
+
  
  */
 
-// Does this need to be in header?
-typedef enum : NSUInteger {
-    kMoveToPoint,
-    kLineToPoint,
-    kQuadCurveToPoint,
-    kCurveToPoint,
-    kCloseSubpath,
-} e_CurveType;
 
 // Change these so that they all use a common prefix (enum type name, and options)
 typedef enum : NSUInteger {
-    SBMorphingBezierTimingFunctionLinear,
+    SBTimingFunctionLinear,
     // Sine
-    SBMorphingBezierTimingFunctionSineIn,
-    SBMorphingBezierTimingFunctionSineOut,
-    SBMorphingBezierTimingFunctionSineInOut,
+    SBTimingFunctionSineIn,
+    SBTimingFunctionSineOut,
+    SBTimingFunctionSineInOut,
     // Exponential
-    SBMorphingBezierTimingFunctionExponentialIn,
-    SBMorphingBezierTimingFunctionExponentialOut,
-    SBMorphingBezierTimingFunctionExponentialInOut,
+    SBTimingFunctionExponentialIn,
+    SBTimingFunctionExponentialOut,
+    SBTimingFunctionExponentialInOut,
     // Back
-    SBMorphingBezierTimingFunctionBackIn,
-    SBMorphingBezierTimingFunctionBackOut,
-    SBMorphingBezierTimingFunctionBackInOut,
+    SBTimingFunctionBackIn,
+    SBTimingFunctionBackOut,
+    SBTimingFunctionBackInOut,
     // Bounce
-    SBMorphingBezierTimingFunctionBounceIn,
-    SBMorphingBezierTimingFunctionBounceOut,
-    SBMorphingBezierTimingFunctionBounceInOut,
+    SBTimingFunctionBounceIn,
+    SBTimingFunctionBounceOut,
+    SBTimingFunctionBounceInOut,
     // Elastic
-    SBMorphingBezierTimingFunctionElasticIn,
-    SBMorphingBezierTimingFunctionElasticOut,
-    SBMorphingBezierTimingFunctionElasticInOut
-} SBMorphingBezierTimingFunction;
-
-
-
-// Do these extensions really need to go in header?
-
-// Bezier Extension
-@interface UIBezierPath (Morph)
--(NSMutableArray*)getAllPoints;
-@end
-
-// Bezier Point
-@interface BezierPoint : NSObject
-@property e_CurveType curveType;
-@property CGPoint loc;
-@property CGPoint cp1;
-@property CGPoint cp2;
-@end
-
-// Point connection
-@interface PointConnection : NSObject
-@property CGPoint p1;
-@property CGPoint p2;
-@end
-
+    SBTimingFunctionElasticIn,
+    SBTimingFunctionElasticOut,
+    SBTimingFunctionElasticInOut
+} SBTimingFunctions;
 
 // Bezier Morph View
 
 typedef void (^DrawBlock)(UIBezierPath *path, float t);
+typedef void (^DrawBlockMP)(NSArray *paths, float t);
+typedef void (^CompletionBlock)();
 
 @interface SBMorphingBezierView : UIView
-@property float accuracy;
-@property int lengthSamplingDivisions;
+
 // Basic drawing properties
 @property float strokeWidth;
 @property(nonatomic, strong) UIColor *strokeColour;
 @property (nonatomic, strong) UIColor *fillColour;
 
+// performance settings
+@property float accuracy;
+@property int lengthSamplingDivisions;
+@property BOOL matchShapeRotations;
+@property BOOL adjustForCentreOffset;
 
 // Morphing
--(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration timingFunc:(SBMorphingBezierTimingFunction)tf;
+-(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration timingFunc:(SBTimingFunctions)tf;
 -(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration;
 
 // Morphing With Draw Block
--(void)morphFromPath:(UIBezierPath *)path1 toPath:(UIBezierPath *)path2 duration:(float)duration timingFunc:(SBMorphingBezierTimingFunction)tf drawBlock:(DrawBlock)drawBlock;
-
+-(void)morphFromPath:(UIBezierPath *)path1 toPath:(UIBezierPath *)path2 duration:(float)duration timingFunc:(SBTimingFunctions)tf drawBlock:(DrawBlock)drawBlock completionBlock:(CompletionBlock)completionBlock;
 -(void)stopMorphing;
 
-
-
-// Multiple paths!!!
+// Morphing Multiple Paths
+-(void)morphFromPaths:(NSArray*)startPaths toPaths:(NSArray*)endPaths duration:(float)duration timingFunc:(SBTimingFunctions)tf drawBlock:(DrawBlockMP)drawBlock completionBlock:(CompletionBlock)completionBlock;
 
 
 

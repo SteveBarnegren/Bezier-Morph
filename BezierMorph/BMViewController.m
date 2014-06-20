@@ -11,6 +11,8 @@
 #import "BMViewController.h"
 #import "SBMorphingBezierView.h"
 
+@import CoreText;
+
 @interface BMViewController ()
 
 @property(nonatomic, strong) SBMorphingBezierView *bezierMorphView;
@@ -27,13 +29,10 @@
     
     
     // do the performance test
-    [self performSelector:@selector(doPerformanceTest) withObject:nil afterDelay:5];
-    return;
+    //[self performSelector:@selector(doPerformanceTest) withObject:nil afterDelay:5];
+   // return;
     
-    
-    
-    
-    
+
     _pathNum = 0;
     
     NSLog(@"view did load");
@@ -58,23 +57,19 @@
               [UIBezierPath bezierPathWithOvalInRect:CGRectMake(topLeft.x, topLeft.y, 7, 7)],
               [self plusSignPathWithCentre:topLeft scale:5],
               [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 20) cornerRadius:10],
+              [self letterCPathWithCentre:middle],
              nil];
     
     /*
     _paths = [NSArray arrayWithObjects:
-              [self plusSignPathWithCentre:CGPointMake(middle.x - 20, middle.y - 20) scale:40],
-              [UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 50, middle.y - 50, 100, 100)],
+              [UIBezierPath bezierPathWithRect:CGRectMake(middle.x - 10, middle.y- 100, 20, 200)],
+              [self tPathWithCentre:middle scale:-40],
               nil];
-*/
-    /*
-    _paths = [NSArray arrayWithObjects:
-              [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 20) cornerRadius:10],
-              [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200) cornerRadius:15],
-              nil];
-*/
+    */
+    //[NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(morphToNextPath) userInfo:nil repeats:NO];
     
-    [NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(morphToNextPath) userInfo:nil repeats:YES];
-    
+    [self morphToNextPath];
+    //[self drawTwoRandomPaths];
     
     
     
@@ -100,7 +95,7 @@
         _pathNum = 0;
     }
     */
-    
+    /*
     // basic random
     
     UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
@@ -115,10 +110,10 @@
     [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1];
     
     _pathNum = newPathNum;
-
+*/
     
     // block based (with shadow)
-    /*
+    
      UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
      
      int newPathNum;
@@ -131,7 +126,7 @@
     static BOOL onColour1 = YES;
     onColour1 = !onColour1;
      
-     [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1 timingFunc:kMorphingBezierTimingFunctionElasticOut drawBlock:^(UIBezierPath *path, float t) {
+     [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1 timingFunc:SBTimingFunctionExponentialInOut drawBlock:^(UIBezierPath *path, float t) {
          
          UIColor *colour1 = [UIColor colorWithRed:1*t green:0 blue:1-(1*t) alpha:1];
          UIColor *colour2 = [UIColor colorWithRed:1-(1*t) green:0 blue:1*t alpha:1];
@@ -151,16 +146,66 @@
          CGContextStrokePath(context);
          
        
+     } completionBlock:^{
+         NSLog(@"complete");
+         [self morphToNextPath];
      }];
     
      _pathNum = newPathNum;
-   */
+  
+}
+
+-(void)drawTwoRandomPaths{
+    
+    _bezierMorphView.accuracy = 1;
+    _bezierMorphView.matchShapeRotations = YES;
+    _bezierMorphView.adjustForCentreOffset = YES;
+    
+    static int numPaths = 1;
+    static int counter = 0;
+    
+    counter++;
+    
+    if (counter == 2) {
+        numPaths+=5;
+        counter = 0;
+        NSLog(@"%i paths", numPaths);
+    }
     
     
     
     
     
+    NSMutableArray *array = [[NSMutableArray alloc]init];
+    NSMutableArray *array2 = [[NSMutableArray alloc]init];
     
+    for (int i = 0; i < numPaths; i++) {
+        
+        [array addObject:[_paths objectAtIndex:arc4random()%_paths.count]];
+        [array2 addObject:[_paths objectAtIndex:arc4random()%_paths.count]];
+        
+    }
+    
+    [_bezierMorphView morphFromPaths:array toPaths:array2 duration:3 timingFunc:SBTimingFunctionElasticOut drawBlock:^(NSArray *paths, float t) {
+        
+        for (UIBezierPath *path in paths) {
+            
+            // fill
+            [[UIColor orangeColor]set];
+            [path fill];
+            
+            [[UIColor blackColor]set];
+            [path stroke];
+        }
+        
+  
+    } completionBlock:^{
+        
+       
+        [self drawTwoRandomPaths];
+        
+        
+    }];
     
 }
 
@@ -224,6 +269,20 @@
     [path addLineToPoint:CGPointMake(centre.x +(3*scale), centre.y + (2*scale))];
     [path closePath];
     return path;
+}
+
+-(UIBezierPath*)letterCPathWithCentre:(CGPoint)centre{
+    
+    CGGlyph glyph = 'W';
+    CTFontRef font = CTFontCreateWithName((__bridge CFStringRef)@"Helvetica", 85, NULL);
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    CGPathRef path = CTFontCreatePathForGlyph(font, glyph, &transform);
+    UIBezierPath *bezier = [UIBezierPath bezierPathWithCGPath:path];
+    CGPathRelease(path);
+    CFRelease(font);
+    
+    return bezier;
+    
 }
 
 
