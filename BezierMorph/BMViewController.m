@@ -47,8 +47,9 @@
     
     _paths = [NSArray arrayWithObjects:
               [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200) cornerRadius:15],
-             [UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)],
               [self arrowPathWithCentre:middle scale:50],
+
+             [UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)],
               [self plusSignPathWithCentre:middle scale:40],
               [UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)],
               [self tPathWithCentre:middle scale:40],
@@ -69,9 +70,9 @@
     */
     //[NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(morphToNextPath) userInfo:nil repeats:NO];
     
-    //[self morphToNextPath];
+    [self morphToNextPath];
     //[self drawTwoRandomPaths];
-    [self drawMultipleStrokedBeziers];
+    //[self drawMultipleStrokedBeziers];
     
     
     
@@ -81,7 +82,7 @@
     
     // basic sequential
     
-    /*
+    
     UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
     int nextIndex = _pathNum+1;
     if (nextIndex >= _paths.count) {
@@ -96,7 +97,7 @@
     if (_pathNum >= _paths.count) {
         _pathNum = 0;
     }
-    */
+    
     /*
     // basic random
     
@@ -115,7 +116,7 @@
 */
     
     // block based (with shadow)
-    
+    /*
      UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
      
      int newPathNum;
@@ -154,7 +155,7 @@
      }];
     
      _pathNum = newPathNum;
-  
+  */
 }
 
 -(void)drawTwoRandomPaths{

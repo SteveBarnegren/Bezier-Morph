@@ -32,6 +32,9 @@ typedef enum : NSUInteger {
 @property CGPoint loc;
 @property CGPoint cp1;
 @property CGPoint cp2;
+@property float length;
+@property float perimeterPct;
+@property SBBezierPoint *mirrorPoint;
 @end
 
 // Bezier Extension
@@ -76,6 +79,9 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             {
                 SBBezierPoint *point = [[SBBezierPoint alloc]init];
                 point.loc = points[0];
+                point.cp1 = point.loc;
+                point.cp2 = point.loc;
+                
                 point.curveType = kLineToPoint;
                 [bezierPoints addObject:point];
             }
@@ -125,6 +131,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         _loc = CGPointZero;
         _cp1 = CGPointZero;
         _cp2 = CGPointZero;
+        _mirrorPoint = nil;
     }
     return self;
 }
@@ -234,10 +241,15 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     _morphDuration = duration;
     _morphPct = 0;
     
-    NSMutableArray *path1Points = [self segmentPointsForBezierPath:path1];
-    NSMutableArray *path2Points = [self segmentPointsForBezierPath:path2];
+    NSMutableArray *path1Points = [path1 getAllPoints];
+    NSMutableArray *path2Points = [path2 getAllPoints];
     
     _connectionsArray = [self createConnectionsBetweenPathArraysPath1:path1Points path2:path2Points];
+    NSLog(@"path 1 numPoints = %i", path1Points.count);
+    NSLog(@"path 2 numPoints = %i", path2Points.count);
+    [self debugPrintPoints:path1Points];
+    
+    
     
     _morphTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(morphTick) userInfo:nil repeats:YES];
     _startTime = CACurrentMediaTime();
@@ -338,6 +350,8 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     
 }
 
+#define InterpolatePoints(p1, p2) CGPointMake(p1.x + ((p2.x - p1.x) * t), p1.y + ((p2.y - p1.y) * t))
+
 -(void)drawRectForSinglePath{
     
     if (_connectionsArray == nil) {
@@ -351,24 +365,22 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     UIBezierPath *path = [[UIBezierPath alloc]init];
     BOOL isFirstPoint = YES;
     
-    for (SBPointConnection *connection in _connectionsArray) {
+    for (SBBezierPoint *point in _connectionsArray) {
         
-        CGPoint p1 = _usingReversedConnections?connection.p2:connection.p1;
-        CGPoint p2 = _usingReversedConnections?connection.p1:connection.p2;
-        
-        float xDiff = p2.x - p1.x;
-        float yDiff = p2.y - p1.y;
-        
-        CGPoint p = CGPointMake(p1.x + (xDiff * t), p1.y + (yDiff * t));
-        
-        if (isFirstPoint) {
-            [path moveToPoint:p];
-            isFirstPoint = NO;
-            
+        switch (point.curveType) {
+            case kMoveToPoint:
+                [path moveToPoint:InterpolatePoints(point.loc, point.mirrorPoint.loc)];
+                break;
+            case kLineToPoint:
+                [path addCurveToPoint:InterpolatePoints(point.loc, point.mirrorPoint.loc) controlPoint1:InterpolatePoints(point.cp1, point.mirrorPoint.cp1) controlPoint2:InterpolatePoints(point.cp2, point.mirrorPoint.cp2)];
+                break;
+            case kCurveToPoint:
+                [path addCurveToPoint:InterpolatePoints(point.loc, point.mirrorPoint.loc) controlPoint1:InterpolatePoints(point.cp1, point.mirrorPoint.cp1) controlPoint2:InterpolatePoints(point.cp2, point.mirrorPoint.cp2)];
+                break;
+            default:
+                break;
         }
-        else{
-            [path addLineToPoint:p];
-        }
+        
     }
     
     [path closePath];
@@ -447,6 +459,270 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 
 #pragma mark Building connections
 
+-(NSMutableArray*)createConnectionsBetweenPathArraysPath1:(NSMutableArray*)path1 path2:(NSMutableArray*)path2{
+
+    // the passed in arrays are arrays of SBBezierPoints
+    float path1Length = [self approximateLengthOfPath:path1];
+    NSLog(@"path 1 length = %f", path1Length);
+    float path2Length = [self approximateLengthOfPath:path2];
+    NSLog(@"path 2 length = %f", path2Length);
+
+    float currPerimeterPct = 0;
+    // set path1 perimeter pcts
+    for (SBBezierPoint *point in path1) {
+        float pctOfPath = point.length/path1Length;
+        currPerimeterPct+=pctOfPath;
+        point.perimeterPct = currPerimeterPct;
+    }
+    // set path2 perimeter pcts
+    for (SBBezierPoint *point in path2) {
+        float pctOfPath = point.length/path2Length;
+        currPerimeterPct+=pctOfPath;
+        point.perimeterPct = currPerimeterPct;
+    }
+    
+    // add points on path2 to match the same pcts as path1
+    [self addMirrorPointsFromPath:path1 toPath:path2];
+    [self addMirrorPointsFromPath:path2 toPath:path1];
+
+    // return the first path
+    return path1;
+    
+}
+
+-(void)addMirrorPointsFromPath:(NSMutableArray*)path1 toPath:(NSMutableArray*)path2{
+    
+    //do the first and last points
+    SBBezierPoint *path1FirstObj = [path1 firstObject];
+    SBBezierPoint *path2FirstObj = [path2 firstObject];
+    path1FirstObj.mirrorPoint = path2FirstObj;
+    path2FirstObj.mirrorPoint = path1FirstObj;
+
+    SBBezierPoint *path1LastObj = [path1 lastObject];
+    SBBezierPoint *path2LastObj = [path2 lastObject];
+    path1LastObj.mirrorPoint = path2LastObj;
+    path2LastObj.mirrorPoint = path1LastObj;
+
+    
+    for (SBBezierPoint *path1Point in path1) {
+        if (path1Point.mirrorPoint != nil) {continue;}
+        // find the two points that are either side in the second path
+        NSLog(@"----p1 perimeterpct = %f", path1Point.perimeterPct);
+        int p2Index = 0;
+        for (SBBezierPoint *path2Point in path2) {
+            if (path2Point.mirrorPoint != nil) {continue;}
+            NSLog(@"p2 perimeterpct = %f", path2Point.perimeterPct);
+
+            //NSLog(@"p2 looking for mirror point");
+            if (path2Point.perimeterPct >= path1Point.perimeterPct) {
+                SBBezierPoint *path2PrevPoint = [path2 objectAtIndex:p2Index-1];
+                float pctDiff = path2Point.perimeterPct - path2PrevPoint.perimeterPct;
+                float insertPctDiff = path2PrevPoint.perimeterPct - path1Point.perimeterPct;
+                float t = insertPctDiff/pctDiff;
+                SBBezierPoint *pointToInsert = [self newPointBetweenPointsP1:path1Point p2:path2Point at:t];
+                pointToInsert.mirrorPoint = path1Point;
+                path1Point.mirrorPoint = pointToInsert;
+                continue;
+            }
+ 
+            p2Index++;
+        }
+        
+        
+
+    }
+}
+
+// will ammend the passsed in points, and will return the new points to be inserted into the array
+-(SBBezierPoint*)newPointBetweenPointsP1:(SBBezierPoint*)p1 p2:(SBBezierPoint*)p2 at:(float)t{
+    
+    SBBezierPoint *newPoint = [[SBBezierPoint alloc]init];
+    
+    switch (p2.curveType) {
+        case kLineToPoint:
+        {
+            float xDiff = p2.loc.x - p1.loc.x;
+            float yDiff = p2.loc.y - p1.loc.y;
+            newPoint.loc = CGPointMake(p1.loc.x + (xDiff * t), p1.loc.y + (yDiff * t));
+            // calculate the new precentage
+            newPoint.length = calculatePointsDistance(p1.loc, newPoint.loc);
+            float pctChange = p2.perimeterPct - p1.perimeterPct;
+            newPoint.perimeterPct = pctChange * (newPoint.length / p2.length);
+            p2.length = p2.length - newPoint.length;
+            newPoint.curveType = kLineToPoint;
+        }
+            break;
+        case kCurveToPoint:
+        {
+            newPoint = [self addPointOnCubicBezierFrom:p1 to:p2 at:t];
+        }
+    
+        default:
+            NSLog(@"ERROR, couldn't add point to path");
+            newPoint = nil;
+            break;
+    }
+    
+    
+    return newPoint;
+}
+
+-(SBBezierPoint*)addPointOnCubicBezierFrom:(SBBezierPoint*)point1 to:(SBBezierPoint*)point2 at:(float)t{
+    
+    SBBezierPoint *insertedPoint = [[SBBezierPoint alloc]init];
+    
+    NSLog(@"split curve 2");
+    
+    CGPoint p1 = point1.loc;
+    CGPoint p2 = point2.cp1;
+    CGPoint p3 = point2.cp2;
+    CGPoint p4 = point2.loc;
+    
+    float t1 = t;
+    float t0 = 0;
+    float u0 = 1-t0;
+    float u1 = 1-t1;
+    
+    
+    CGPoint newP1 = CGPointMake((u0*u0*u0*p1.x + (t0*u0*u0 + u0*t0*u0 + u0*u0*t0)*p2.x + (t0*t0*u0 + u0*t0*t0 + t0*u0*t0)*p3.x + t0*t0*t0*p4.x), (u0*u0*u0*p1.y + (t0*u0*u0 + u0*t0*u0 + u0*u0*t0)*p2.y + (t0*t0*u0 + u0*t0*t0 + t0*u0*t0)*p3.y + t0*t0*t0*p4.y));
+    
+    CGPoint newP2 = CGPointMake((u0*u0*u1*p1.x + (t0*u0*u1 + u0*t0*u1 + u0*u0*t1)*p2.x + (t0*t0*u1 + u0*t0*t1 + t0*u0*t1)*p3.x + t0*t0*t1*p4.x), (u0*u0*u1*p1.y + (t0*u0*u1 + u0*t0*u1 + u0*u0*t1)*p2.y + (t0*t0*u1 + u0*t0*t1 + t0*u0*t1)*p3.y + t0*t0*t1*p4.y));
+    
+    CGPoint newP3 = CGPointMake((u0*u1*u1*p1.x + (t0*u1*u1 + u0*t1*u1 + u0*u1*t1)*p2.x + (t0*t1*u1 + u0*t1*t1 + t0*u1*t1)*p3.x + t0*t1*t1*p4.x), (u0*u1*u1*p1.y + (t0*u1*u1 + u0*t1*u1 + u0*u1*t1)*p2.y + (t0*t1*u1 + u0*t1*t1 + t0*u1*t1)*p3.y + t0*t1*t1*p4.y));
+    
+    CGPoint newP4 = CGPointMake((u1*u1*u1*p1.x + (t1*u1*u1 + u1*t1*u1 + u1*u1*t1)*p2.x + (t1*t1*u1 + u1*t1*t1 + t1*u1*t1)*p3.x + t1*t1*t1*p4.x), (u1*u1*u1*p1.y + (t1*u1*u1 + u1*t1*u1 + u1*u1*t1)*p2.y + (t1*t1*u1 + u1*t1*t1 + t1*u1*t1)*p3.y + t1*t1*t1*p4.y));
+    
+    
+    
+    // draw the curve (this should be just the first half
+    insertedPoint.cp1 = p2;
+    insertedPoint.cp2 = p3;
+    insertedPoint.loc = p4;
+
+    
+    // for the second half segment, we can just switch round the curve (start from the end)
+    p1 = point2.loc;
+    p2 = point2.cp2;
+    p3 = point2.cp1;
+    p4 = point1.loc;
+    
+    t = 1-t;
+    t1 = t;
+    t0 = 0;
+    u0 = 1-t0;
+    u1 = 1-t1;
+    
+    
+    newP1 = CGPointMake((u0*u0*u0*p1.x + (t0*u0*u0 + u0*t0*u0 + u0*u0*t0)*p2.x + (t0*t0*u0 + u0*t0*t0 + t0*u0*t0)*p3.x + t0*t0*t0*p4.x), (u0*u0*u0*p1.y + (t0*u0*u0 + u0*t0*u0 + u0*u0*t0)*p2.y + (t0*t0*u0 + u0*t0*t0 + t0*u0*t0)*p3.y + t0*t0*t0*p4.y));
+    
+    newP2 = CGPointMake((u0*u0*u1*p1.x + (t0*u0*u1 + u0*t0*u1 + u0*u0*t1)*p2.x + (t0*t0*u1 + u0*t0*t1 + t0*u0*t1)*p3.x + t0*t0*t1*p4.x), (u0*u0*u1*p1.y + (t0*u0*u1 + u0*t0*u1 + u0*u0*t1)*p2.y + (t0*t0*u1 + u0*t0*t1 + t0*u0*t1)*p3.y + t0*t0*t1*p4.y));
+    
+    newP3 = CGPointMake((u0*u1*u1*p1.x + (t0*u1*u1 + u0*t1*u1 + u0*u1*t1)*p2.x + (t0*t1*u1 + u0*t1*t1 + t0*u1*t1)*p3.x + t0*t1*t1*p4.x), (u0*u1*u1*p1.y + (t0*u1*u1 + u0*t1*u1 + u0*u1*t1)*p2.y + (t0*t1*u1 + u0*t1*t1 + t0*u1*t1)*p3.y + t0*t1*t1*p4.y));
+    
+    newP4 = CGPointMake((u1*u1*u1*p1.x + (t1*u1*u1 + u1*t1*u1 + u1*u1*t1)*p2.x + (t1*t1*u1 + u1*t1*t1 + t1*u1*t1)*p3.x + t1*t1*t1*p4.x), (u1*u1*u1*p1.y + (t1*u1*u1 + u1*t1*u1 + u1*u1*t1)*p2.y + (t1*t1*u1 + u1*t1*t1 + t1*u1*t1)*p3.y + t1*t1*t1*p4.y));
+
+    // as we switched the points round to calculate the second half, we must switch them back here
+    point2.cp1 = p3;
+    point2.cp2 = p2;
+    
+    return insertedPoint;
+    
+}
+
+
+
+
+// will return the approximate (curves are not exact) length a path from an array of SBBezierPoints
+-(float)approximateLengthOfPath:(NSMutableArray*)pathPoints{
+
+    int index = 0;
+    SBBezierPoint *previousPoint = nil;
+    float pathLength = 0;
+    for (SBBezierPoint *point in pathPoints) {
+        
+        NSLog(@"adding path length");
+       
+        if (index == 0) {
+            previousPoint = point;
+            point.perimeterPct = 0;
+            point.length = 0;
+            index++;
+            continue;
+        }
+        
+        float length;
+        
+        switch (point.curveType) {
+            case kMoveToPoint:
+            {
+                length = 0;
+            }
+            case kLineToPoint:
+            {
+                length = calculatePointsDistance(previousPoint.loc, point.loc);
+            }
+                break;
+            case kQuadCurveToPoint:
+                // convert to a cubic curve
+            {
+                CGPoint newCP1;
+                CGPoint newCP2;
+                [self convertBezierFromQuatraticToCubicP0: previousPoint.loc p1:point.cp1 p3:point.loc newP1:&newCP1 newP2:&newCP2];
+                point.cp1 = newCP1;
+                point.cp2 = newCP2;
+                
+                length = [self lengthOfCubicBezierP0:previousPoint.loc p1:point.cp1 p2:point.cp2 p3:point.loc];
+                
+            }
+                break;
+            case kCurveToPoint:
+            {
+                length = [self lengthOfCubicBezierP0:previousPoint.loc p1:point.cp1 p2:point.cp2 p3:point.loc];
+            }
+                break;
+            case kCloseSubpath:
+            {
+                SBBezierPoint *firstPoint = [pathPoints firstObject];
+                length = calculatePointsDistance(firstPoint.loc, point.loc);
+            }
+                break;
+            default:
+                break;
+        }
+   
+        pathLength += length;
+        NSLog(@"pathlength = %f", pathLength);
+        point.length = length;
+ 
+        // increment
+       index++;
+        previousPoint = point;
+        
+    }
+    
+    return pathLength;
+}
+
+
+
+
+// only pointer to the control points are passed in, the start and end points will allways be the same
+-(void)convertBezierFromQuatraticToCubicP0:(CGPoint)p0 p1:(CGPoint)p1 p3:(CGPoint)p3 newP1:(CGPoint*)newP1 newP2:(CGPoint*)newP2{
+
+    NSLog(@"convert bezier from quadratic to cubic");
+    
+#define kN 2.0f
+    
+    *newP1 = CGPointMake( (1.0f/(kN+1.0f))*p0.x + (1.0f-(1.0f/(kN+1.0f)))*p1.x , (1.0f/(kN+1.0f))*p0.y + (1.0f-(1.0f/(kN+1.0f)))*p1.y);
+    *newP2 = CGPointMake( (2.0f/(kN+1.0f))*p1.x + (1.0f-(2.0f/(kN+1.0f)))*p3.x , (2.0f/(kN+1.0f))*p1.y + (1.0f-(2.0f/(kN+1.0f)))*p3.y);
+
+}
+
+
+
+
+
+/*
 -(NSMutableArray*)createConnectionsBetweenPathArraysPath1:(NSMutableArray*)path1 path2:(NSMutableArray*)path2{
     
     NSMutableArray *connectionsArray = [[NSMutableArray alloc]init];
@@ -568,6 +844,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     return connectionsArray;
   
 }
+ */
 
 
 #pragma mark obtaining points on lines
@@ -730,6 +1007,39 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     
     return points;
     
+}
+
+#pragma mark Getting Path Lengths
+
+
+
+-(float)lengthOfCubicBezierP0:(CGPoint)p0 p1:(CGPoint)p1 p2:(CGPoint)p2 p3:(CGPoint)p3{
+    
+    float t;
+    
+    double length = 0;
+    
+    CGPoint prevPoint;
+    BOOL firstPoint = YES;
+    
+    t = 0;
+    for (int i = 0; i < _lengthSamplingDivisions; i++) {
+        
+        float x = powf(1 - t, 3) * p0.x + 3.0f * powf(1 - t, 2) * t * p1.x + 3.0f * (1 - t) * t * t * p2.x + t * t * t * p3.x;
+        float y = powf(1 - t, 3) * p0.y + 3.0f * powf(1 - t, 2) * t * p1.y + 3.0f * (1 - t) * t * t * p2.y + t * t * t * p3.y;
+        t += 1.0f / _lengthSamplingDivisions;
+        
+        if (!firstPoint) {
+            length += sqrt(((x-prevPoint.x) * (x-prevPoint.x)) + ((y-prevPoint.y) * (y-prevPoint.y)));
+        }
+        
+        
+        prevPoint = CGPointMake(x, y);
+        firstPoint = NO;
+        
+        
+    }
+    return length;
 }
 
 // This gets called a lot. Is a function to avoid messaging overhead
@@ -1031,5 +1341,16 @@ float calculatePointsDistance(CGPoint p1, CGPoint p2){
     [[UIBezierPath bezierPathWithOvalInRect:rect]fill];
 
 }
+
+-(void)debugPrintPoints:(NSMutableArray*)pathPoints{
+
+    for (SBBezierPoint *point in pathPoints) {
+        NSLog(@"(%f, %f) <-----> (%f, %f)", point.loc.x, point.loc.y, point.mirrorPoint.loc.x, point.mirrorPoint.loc.y);
+    }
+
+}
+
+
+
 
 @end
