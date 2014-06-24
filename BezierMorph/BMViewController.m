@@ -46,11 +46,13 @@
     CGPoint topRight = CGPointMake(middle.x + 100, middle.y + 100);
     
     _paths = [NSArray arrayWithObjects:
-              [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200) cornerRadius:15],
+              [self plusSignPathWithCentre:middle scale:40],
+
               [self arrowPathWithCentre:middle scale:50],
+              
+              [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200) cornerRadius:15],
 
              [UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)],
-              [self plusSignPathWithCentre:middle scale:40],
               [UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)],
               [self tPathWithCentre:middle scale:40],
               [UIBezierPath bezierPathWithRect:CGRectMake(middle.x - 10, middle.y- 100, 20, 200)],
@@ -90,7 +92,7 @@
     }
     UIBezierPath *path2 =[_paths objectAtIndex:nextIndex];
     
-    [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1];
+    [_bezierMorphView morphFromPath:path1 toPath:path2 duration:10];
 
     
     _pathNum++;
