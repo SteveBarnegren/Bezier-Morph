@@ -72,9 +72,7 @@
     //[self morphToNextPath];
     //[self drawTwoRandomPaths];
     [self drawMultipleStrokedBeziers];
-    
-    
-    
+
 }
 
 -(void)morphToNextPath{
@@ -116,6 +114,8 @@
     
     // block based (with shadow)
     
+    //_bezierMorphView.accuracy = 0.3;
+    
      UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
      
      int newPathNum;
@@ -128,7 +128,7 @@
     static BOOL onColour1 = YES;
     onColour1 = !onColour1;
      
-     [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1 timingFunc:SBTimingFunctionExponentialInOut drawBlock:^(UIBezierPath *path, float t) {
+     [_bezierMorphView morphFromPath:path1 toPath:path2 duration:10 timingFunc:SBTimingFunctionExponentialInOut drawBlock:^(UIBezierPath *path, float t) {
          
          UIColor *colour1 = [UIColor colorWithRed:1*t green:0 blue:1-(1*t) alpha:1];
          UIColor *colour2 = [UIColor colorWithRed:1-(1*t) green:0 blue:1*t alpha:1];
@@ -301,10 +301,13 @@
     static BOOL onColour1 = YES;
     onColour1 = !onColour1;
     
+    _bezierMorphView.accuracy = 1;
+    _bezierMorphView.antialiasDrawing = YES;
+    
     [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1 timingFunc:SBTimingFunctionExponentialInOut drawBlock:^(UIBezierPath *path, float t) {
         
         
-        const int numCopies = 5;
+        const int numCopies = 0;
         
         [[UIColor blackColor]set];
         [path stroke];

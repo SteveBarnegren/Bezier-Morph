@@ -196,6 +196,8 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         
         _useBlockDrawing = NO;
         
+        _antialiasDrawing = YES;
+        
         // drawing properties
         _strokeWidth = 1.0f;
         _strokeColour = [UIColor blackColor];
@@ -327,7 +329,13 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 
 -(void)drawRect:(CGRect)rect{
     
+    
     [super drawRect:rect];
+    
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetShouldAntialias(context, _antialiasDrawing);
+    CGContextSetAllowsAntialiasing(context, _antialiasDrawing);
+    
     
     if (_isDrawingMultiplePaths) {
         [self drawRectForMultiplePaths];

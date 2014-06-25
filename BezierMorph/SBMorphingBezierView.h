@@ -57,9 +57,10 @@ typedef void (^CompletionBlock)();
 
 // performance settings
 @property float accuracy;
-@property int lengthSamplingDivisions;
-@property BOOL matchShapeRotations;
-@property BOOL adjustForCentreOffset;
+@property int   lengthSamplingDivisions;
+@property BOOL  matchShapeRotations;
+@property BOOL  adjustForCentreOffset;
+@property BOOL  antialiasDrawing;
 
 // Morphing
 -(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration timingFunc:(SBTimingFunctions)tf;
