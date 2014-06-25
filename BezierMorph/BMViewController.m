@@ -46,10 +46,10 @@
     CGPoint topRight = CGPointMake(middle.x + 100, middle.y + 100);
     
     _paths = [NSArray arrayWithObjects:
-              [self plusSignPathWithCentre:middle scale:40],
 
               [self arrowPathWithCentre:middle scale:50],
-              
+              [self plusSignPathWithCentre:middle scale:40],
+
               [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200) cornerRadius:15],
 
              [UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)],

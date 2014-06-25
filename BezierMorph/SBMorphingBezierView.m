@@ -525,6 +525,9 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     [self removeClosePathsFromPointsArray:path2];
     // match rotations
     path2 = [self matchRotationOfPath:path1 withPath:path2];
+    // update control points
+    [self calculateControlPointsForStraightLinesInPath:path1];
+    [self calculateControlPointsForStraightLinesInPath:path2];
     
     
     
@@ -605,8 +608,15 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     const int rotationDivisions = 1000; // rotation accuracy, should be as a property
     
     SBBezierPoint *path2PrevPoint = nil;
-    
+    int index = 0;
     for (SBBezierPoint *point in path2) {
+        
+        if (point.curveType == kMoveToPoint) {
+            index++;
+            continue;
+        }
+        index++;
+        path2PrevPoint = [path2 objectAtIndex:index-1];
         
         if (point.curveType == kMoveToPoint) {
             // do nothing
@@ -657,7 +667,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             }
         }
   
-        path2PrevPoint = point;
+        //path2PrevPoint = point;
     }
     
     
@@ -665,6 +675,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     
     
     SBBezierPoint *newPoint = [self newPointBetweenPointsP1:closestPointPrevPoint p2:closestPointNextPoint at:closestPointT];
+    NSLog(@"Insertion point (%f, %f)", newPoint.loc.x, newPoint.loc.y);
     newPoint.curveType = kMoveToPoint;
     int insertIndex = [path2 indexOfObject:closestPointNextPoint];
     [path2 insertObject:newPoint atIndex:insertIndex];
@@ -761,6 +772,39 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     NSLog(@"path 1 points = %i", path1.count);
     NSLog(@"path 2 points = %i", path2.count);
 
+}
+
+-(void)calculateControlPointsForStraightLinesInPath:(NSMutableArray*)path{
+    
+    
+    int index = 0;
+    for (SBBezierPoint *point in path) {
+        if (index == 0) {
+            index++;
+            continue;
+        }
+        
+        if (point.curveType != kLineToPoint) {
+            index++;
+            continue;
+        }
+        
+        SBBezierPoint *prevPoint = [path objectAtIndex:index-1];
+        // place the control points in the middle
+       /*
+        float xDiff = point.loc.x - prevPoint.loc.x;
+        float yDiff = point.loc.y - prevPoint.loc.y;
+        CGPoint midPoint = CGPointMake(prevPoint.loc.x + (xDiff/2), point.loc.y + (yDiff/2));
+        point.cp1 = midPoint;
+        point.cp2 = midPoint;
+ */
+        
+        // control points follow main points
+        point.cp1 = prevPoint.loc;
+        point.cp2 = point.loc;
+        
+   
+   }
 }
 
 // will ammend the passsed in points, and will return the new points to be inserted into the array
