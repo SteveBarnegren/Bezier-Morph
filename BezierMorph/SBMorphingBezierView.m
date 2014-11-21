@@ -171,8 +171,6 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     NSMutableArray *_multiplePathsUsingReversedConnectionsArray;
     DrawBlockMP _drawBlockMP;
 
-
-
 }
 
 -(id)initWithFrame:(CGRect)frame{
@@ -359,6 +357,8 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     UIBezierPath *path = [[UIBezierPath alloc]init];
     BOOL isFirstPoint = YES;
     
+    CGPoint lastDrawnPoint;
+    
     for (SBPointConnection *connection in _connectionsArray) {
         
         CGPoint p1 = _usingReversedConnections?connection.p2:connection.p1;
@@ -372,10 +372,14 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         if (isFirstPoint) {
             [path moveToPoint:p];
             isFirstPoint = NO;
+            lastDrawnPoint = p;
             
         }
         else{
-            [path addLineToPoint:p];
+            if (calculatePointsDistance(lastDrawnPoint, p) > 1) {
+                [path addLineToPoint:p];
+                lastDrawnPoint = p;
+            }
         }
     }
     
@@ -460,7 +464,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     NSMutableArray *connectionsArray = [[NSMutableArray alloc]init];
     
     // always morph from the path with the most points to the one with the least points
-    // swap them round here if need be
+    // swap them round here if need to
     if (path1.count < path2.count) {
         NSMutableArray *tempPath = path1;
         path1 = path2;
@@ -513,9 +517,13 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             
         }
 
+    
+    
+    int closestIndex = 0;
+
     // rotate the second path so that the points match up as much as possible
     if (_matchShapeRotations) {
-        int closestIndex = 0;
+        
         float closestDist = 10000;
 
         CGPoint p1StartLoc = ((NSValue*)[path1 firstObject]).CGPointValue;
@@ -537,7 +545,22 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             
         }
         
-        // rearrange the array
+        
+        
+    }
+    else{
+        closestIndex = path2.count * self.rotationOffset;
+        NSLog(@"path 2 count = %i", path2.count);
+        NSLog(@"rotation offset = %f", self.rotationOffset);
+        //closestIndex = MAX(0, closestIndex);
+       // closestIndex = MIN(closestIndex, path2.count);
+        NSLog(@"CLOSEST INDEX = %i", closestIndex);
+        ;
+    }
+    
+    // rearrange the array (only if the new index isn't zero)
+    if (closestIndex != 0) {
+        
         int newStartIndex = closestIndex;
         
         NSMutableArray *newArray = [[NSMutableArray alloc]init];
@@ -552,9 +575,10 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             
         } while (i != newStartIndex);
         path2 = newArray;
-        
+
     }
     
+    // Make the connections
     float ratio = (float)path2.count/(float)path1.count;
 
     int index = 0;

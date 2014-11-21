@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		40528511195491A70096C937 /* UIBezierPath+BezierCreator.m in Sources */ = {isa = PBXBuildFile; fileRef = 40528510195491A70096C937 /* UIBezierPath+BezierCreator.m */; };
+		40C2BB731A1F4E8900C1369F /* Paths.m in Sources */ = {isa = PBXBuildFile; fileRef = 40C2BB721A1F4E8900C1369F /* Paths.m */; };
+		40C2BB771A1F4FD900C1369F /* UIBezierPath+AnimalPaths.m in Sources */ = {isa = PBXBuildFile; fileRef = 40C2BB761A1F4FD900C1369F /* UIBezierPath+AnimalPaths.m */; };
+		40C2BB7A1A1F506300C1369F /* UIBezierPath+MiscPaths.m in Sources */ = {isa = PBXBuildFile; fileRef = 40C2BB791A1F506300C1369F /* UIBezierPath+MiscPaths.m */; };
+		40CBD34A1A1F6C00006310EF /* UIBezierPath+ButterflyPaths.m in Sources */ = {isa = PBXBuildFile; fileRef = 40CBD3491A1F6C00006310EF /* UIBezierPath+ButterflyPaths.m */; };
+		40ED260C1A1F841500439B3F /* UIBezierPath+BasicShapePaths.m in Sources */ = {isa = PBXBuildFile; fileRef = 40ED260B1A1F841500439B3F /* UIBezierPath+BasicShapePaths.m */; };
 		40F2B4191950857900723567 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40F2B4181950857900723567 /* Foundation.framework */; };
 		40F2B41B1950857900723567 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40F2B41A1950857900723567 /* CoreGraphics.framework */; };
 		40F2B41D1950857900723567 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40F2B41C1950857900723567 /* UIKit.framework */; };
@@ -39,6 +44,16 @@
 /* Begin PBXFileReference section */
 		4052850F195491A70096C937 /* UIBezierPath+BezierCreator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIBezierPath+BezierCreator.h"; sourceTree = "<group>"; };
 		40528510195491A70096C937 /* UIBezierPath+BezierCreator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIBezierPath+BezierCreator.m"; sourceTree = "<group>"; };
+		40C2BB711A1F4E8900C1369F /* Paths.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Paths.h; sourceTree = "<group>"; };
+		40C2BB721A1F4E8900C1369F /* Paths.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Paths.m; sourceTree = "<group>"; };
+		40C2BB751A1F4FD900C1369F /* UIBezierPath+AnimalPaths.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIBezierPath+AnimalPaths.h"; path = "Path Creation/UIBezierPath+AnimalPaths.h"; sourceTree = "<group>"; };
+		40C2BB761A1F4FD900C1369F /* UIBezierPath+AnimalPaths.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIBezierPath+AnimalPaths.m"; path = "Path Creation/UIBezierPath+AnimalPaths.m"; sourceTree = "<group>"; };
+		40C2BB781A1F506300C1369F /* UIBezierPath+MiscPaths.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIBezierPath+MiscPaths.h"; path = "Path Creation/UIBezierPath+MiscPaths.h"; sourceTree = "<group>"; };
+		40C2BB791A1F506300C1369F /* UIBezierPath+MiscPaths.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIBezierPath+MiscPaths.m"; path = "Path Creation/UIBezierPath+MiscPaths.m"; sourceTree = "<group>"; };
+		40CBD3481A1F6C00006310EF /* UIBezierPath+ButterflyPaths.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIBezierPath+ButterflyPaths.h"; sourceTree = "<group>"; };
+		40CBD3491A1F6C00006310EF /* UIBezierPath+ButterflyPaths.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIBezierPath+ButterflyPaths.m"; sourceTree = "<group>"; };
+		40ED260A1A1F841500439B3F /* UIBezierPath+BasicShapePaths.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIBezierPath+BasicShapePaths.h"; sourceTree = "<group>"; };
+		40ED260B1A1F841500439B3F /* UIBezierPath+BasicShapePaths.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIBezierPath+BasicShapePaths.m"; sourceTree = "<group>"; };
 		40F2B4151950857900723567 /* BezierMorph.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BezierMorph.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		40F2B4181950857900723567 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		40F2B41A1950857900723567 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -87,6 +102,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		40C2BB741A1F4F4B00C1369F /* Path Creation */ = {
+			isa = PBXGroup;
+			children = (
+				40C2BB751A1F4FD900C1369F /* UIBezierPath+AnimalPaths.h */,
+				40C2BB761A1F4FD900C1369F /* UIBezierPath+AnimalPaths.m */,
+				40C2BB781A1F506300C1369F /* UIBezierPath+MiscPaths.h */,
+				40C2BB791A1F506300C1369F /* UIBezierPath+MiscPaths.m */,
+				40CBD3481A1F6C00006310EF /* UIBezierPath+ButterflyPaths.h */,
+				40CBD3491A1F6C00006310EF /* UIBezierPath+ButterflyPaths.m */,
+				40ED260A1A1F841500439B3F /* UIBezierPath+BasicShapePaths.h */,
+				40ED260B1A1F841500439B3F /* UIBezierPath+BasicShapePaths.m */,
+			);
+			name = "Path Creation";
+			sourceTree = "<group>";
+		};
 		40F2B40C1950857900723567 = {
 			isa = PBXGroup;
 			children = (
@@ -120,12 +150,15 @@
 		40F2B41E1950857900723567 /* BezierMorph */ = {
 			isa = PBXGroup;
 			children = (
+				40C2BB741A1F4F4B00C1369F /* Path Creation */,
 				40F2B4271950857900723567 /* BMAppDelegate.h */,
 				40F2B4281950857900723567 /* BMAppDelegate.m */,
 				40F2B42A1950857900723567 /* Main_iPhone.storyboard */,
 				40F2B42D1950857900723567 /* Main_iPad.storyboard */,
 				40F2B4301950857900723567 /* BMViewController.h */,
 				40F2B4311950857900723567 /* BMViewController.m */,
+				40C2BB711A1F4E8900C1369F /* Paths.h */,
+				40C2BB721A1F4E8900C1369F /* Paths.m */,
 				40F2B450195085E100723567 /* SBMorphingBezierView.h */,
 				40F2B451195085E100723567 /* SBMorphingBezierView.m */,
 				4052850F195491A70096C937 /* UIBezierPath+BezierCreator.h */,
@@ -264,10 +297,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				40C2BB731A1F4E8900C1369F /* Paths.m in Sources */,
 				40F2B4321950857900723567 /* BMViewController.m in Sources */,
 				40F2B4251950857900723567 /* main.m in Sources */,
+				40ED260C1A1F841500439B3F /* UIBezierPath+BasicShapePaths.m in Sources */,
 				40F2B452195085E100723567 /* SBMorphingBezierView.m in Sources */,
 				40F2B4291950857900723567 /* BMAppDelegate.m in Sources */,
+				40CBD34A1A1F6C00006310EF /* UIBezierPath+ButterflyPaths.m in Sources */,
+				40C2BB771A1F4FD900C1369F /* UIBezierPath+AnimalPaths.m in Sources */,
+				40C2BB7A1A1F506300C1369F /* UIBezierPath+MiscPaths.m in Sources */,
 				40528511195491A70096C937 /* UIBezierPath+BezierCreator.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

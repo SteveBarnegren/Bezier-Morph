@@ -11,6 +11,7 @@
 @interface UIBezierPath (BezierCreator)
 
 +(UIBezierPath*)bezierPathWithScaledBezierPath:(UIBezierPath*)inputPath aroundPoint:(CGPoint)centrePoint scale:(float)scale;
++(UIBezierPath*)bezierPathWithReverseOfPath:(UIBezierPath*)inputPath;
 
 
 

@@ -54,6 +54,7 @@ typedef void (^CompletionBlock)();
 @property float strokeWidth;
 @property(nonatomic, strong) UIColor *strokeColour;
 @property (nonatomic, strong) UIColor *fillColour;
+@property float rotationOffset;
 
 // performance settings
 @property float accuracy;

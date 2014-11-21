@@ -8,6 +8,15 @@
 
 #import <UIKit/UIKit.h>
 
+@interface MorphAnimationInfo : NSObject
+@property (nonatomic, strong) UIBezierPath *path;
+@property BOOL automatchRotation;
+@property float rotationOffset;
+@end
+
+
+
+
 @interface BMViewController : UIViewController
 
 @end

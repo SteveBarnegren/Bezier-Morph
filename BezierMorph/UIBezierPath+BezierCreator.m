@@ -107,6 +107,67 @@ typedef enum : NSUInteger {
     
 }
 
++(UIBezierPath*)bezierPathWithReverseOfPath:(UIBezierPath*)inputPath{
+
+    NSMutableArray *points = [inputPath getPointsInfo];
+
+    NSLog(@"num points to reverse = %i", points.count);
+    
+    UIBezierPath *outputPath = [UIBezierPath bezierPath];
+    
+    BOOL shouldClosePath = NO;
+    
+    BezierPoint *prevPoint = nil;
+    e_BezierCurveType prevCurveType = kCloseSubpath;
+    
+    for (BezierPoint *point in [points reverseObjectEnumerator]) {
+        
+        BOOL savePoint = YES;
+        
+        // complete the previous move
+        if (point.curveType == kCloseSubpath){
+            shouldClosePath = YES;
+            savePoint = NO;
+        }
+        else if (!prevPoint) {
+            NSLog(@"move");
+            [outputPath moveToPoint:point.loc];
+        }
+        else if (prevCurveType == kMoveToPoint) {
+            NSLog(@"move");
+            [outputPath moveToPoint:point.loc];
+        }
+        else if (prevCurveType == kLineToPoint){
+            NSLog(@"line");
+            [outputPath addLineToPoint:point.loc];
+        }
+        else if (prevCurveType == kCurveToPoint){
+            NSLog(@"curve");
+            [outputPath addCurveToPoint:point.loc controlPoint1:prevPoint.cp1 controlPoint2:prevPoint.cp2];
+        }
+        else if (prevCurveType == kQuadCurveToPoint){
+            NSLog(@"quad curve");
+            [outputPath addQuadCurveToPoint:prevPoint.loc controlPoint:prevPoint.cp1];
+        }
+        
+        if (savePoint) {
+            prevPoint = point;
+            prevCurveType = point.curveType;
+        }
+        
+    }
+    
+    if (shouldClosePath) {
+        NSLog(@"close");
+        [outputPath closePath];
+    }
+    
+    ;
+    
+    return outputPath;
+
+}
+
 -(NSMutableArray*)getPointsInfo{
     
     NSMutableArray *bezierPoints = [NSMutableArray array];
