@@ -143,7 +143,7 @@ typedef enum : NSUInteger {
         }
         else if (prevCurveType == kCurveToPoint){
             NSLog(@"curve");
-            [outputPath addCurveToPoint:point.loc controlPoint1:prevPoint.cp1 controlPoint2:prevPoint.cp2];
+            [outputPath addCurveToPoint:point.loc controlPoint1:prevPoint.cp2 controlPoint2:prevPoint.cp1];
         }
         else if (prevCurveType == kQuadCurveToPoint){
             NSLog(@"quad curve");
@@ -161,9 +161,7 @@ typedef enum : NSUInteger {
         NSLog(@"close");
         [outputPath closePath];
     }
-    
-    ;
-    
+
     return outputPath;
 
 }

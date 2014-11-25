@@ -96,55 +96,50 @@
      */
     
     self.paths = @[
+                   
+                   // Rounded rect
+                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200) cornerRadius:15]
+                                             matchRotation:YES
+                                            rotationOffset:0],
+                   
+                   // Circle
+                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)]
+                                             matchRotation:YES
+                                            rotationOffset:0],
+
+
                    // Plus sign
                    [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath plusSignPathWithCentre:middle scale:40]
                                              matchRotation:YES
                                             rotationOffset:0],
+                 
                    
                    // T
                    [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath tPathWithCentre:middle scale:40]
                                              matchRotation:YES
                                             rotationOffset:0],
+                    
+                    
                    // arrow
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath arrowPathWithCentre:middle scale:50]
+                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithReverseOfPath:[UIBezierPath arrowPathWithCentre:middle scale:50]]
                                              matchRotation:YES
                                             rotationOffset:0],
-                   
+                    
                    // jigsaw
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath jigsawPathInFrame:[self frameWithWidthPct:0.5 heightPct:0.4 xOffset:0.05 yOffset:0]]
+                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithReverseOfPath:[UIBezierPath jigsawPathInFrame:[self frameWithWidthPct:0.5 heightPct:0.4 xOffset:0.05 yOffset:0]]]
                                              matchRotation:NO
-                                            rotationOffset:0.6],
-                   /*
-                   // chick
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath chickPathInFrame:[self frameWithWidthPct:0.8 heightPct:0.7 xOffset:0.05 yOffset:0]]
-                                             matchRotation:NO
-                                            rotationOffset:0.6],
-                   
-                   // chickin
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath chickenPathInFrame:[self frameWithWidthPct:0.9 heightPct:0.6 xOffset:0.05 yOffset:0]]
-                                             matchRotation:NO
-                                            rotationOffset:0.6],
-                   
-                   // rhino
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath rhinoPathWithFrame:[self frameWithWidthPct:0.8 heightPct:0.4 xOffset:0 yOffset:0]]
-                                             matchRotation:NO
-                                            rotationOffset:0.7],
-                   // elephant
-                   [[MorphAnimationInfo alloc]initWithPath:
-                    [UIBezierPath bezierPathWithReverseOfPath:[UIBezierPath elephantPathInFrame:[self frameWithWidthPct:0.9 heightPct:0.6 xOffset:0 yOffset:0]]]
-                                             matchRotation:NO
-                                            rotationOffset:0.4],
-                   */
-                   
+                                            rotationOffset:0.2],
+                                     
                    ];
     
     
        //[NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(morphToNextPath) userInfo:nil repeats:NO];
     
-    //[self morphToNextPath];
-    //[self drawTwoRandomPaths];
-    //[self drawMultipleStrokedBeziers];
+
     [self doPathsSequentialBasic];
+   // [self doAnimalPathsFromPath:[UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)]];
+    //[self doButterflyPathsFromPath:[UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)]];
+    
 
 }
 
@@ -160,19 +155,20 @@
     
     UIBezierPath *prevPath = ((MorphAnimationInfo*)self.paths[pathNum-1]).path;
     
-    [_bezierMorphView morphFromPath:prevPath toPath:morphInfo.path duration:4 timingFunc:SBTimingFunctionExponentialInOut drawBlock:^(UIBezierPath *path, float t) {
+    [_bezierMorphView morphFromPath:prevPath toPath:morphInfo.path duration:4 timingFunc:SBTimingFunctionElasticOut drawBlock:^(UIBezierPath *path, float t) {
         
         [[UIColor blackColor]set];
         [path stroke];
     
     } completionBlock:^{
         
-        if (pathNum == self.paths.count-1) {
+        if (pathNum == self.paths.count) {
             
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            pathNum = 1;
+            //dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 //[self doButterflyPathsFromPath:morphInfo.path];
                 [self doAnimalPathsFromPath:morphInfo.path];
-            });
+            //});
         }
         else{
             [self performSelector:@selector(doPathsSequentialBasic) withObject:nil afterDelay:0.05];
@@ -210,7 +206,7 @@
         effectEndAmount = 1;
     }
 
-    [_bezierMorphView morphFromPath:prevPath toPath:morphInfo.path duration:4 timingFunc:SBTimingFunctionElasticOut drawBlock:^(UIBezierPath *path, float t) {
+    [_bezierMorphView morphFromPath:prevPath toPath:morphInfo.path duration:4 timingFunc:SBTimingFunctionExponentialInOut drawBlock:^(UIBezierPath *path, float t) {
         
         float effectAmount = effectStartAmount + ((effectEndAmount - effectStartAmount)*t);
         
@@ -220,7 +216,8 @@
         
     } completionBlock:^{
         
-        if (pathNum == self.paths.count-1) {
+        if (pathNum == self.animalPaths.count) {
+            pathNum = 0;
             
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 [self doButterflyPathsFromPath:morphInfo.path];
@@ -264,7 +261,7 @@
         effectEndAmount = 1;
     }
     
-    [_bezierMorphView morphFromPath:prevPath toPath:morphInfo.path duration:4 timingFunc:SBTimingFunctionLinear drawBlock:^(UIBezierPath *path, float t) {
+    [_bezierMorphView morphFromPath:prevPath toPath:morphInfo.path duration:2 timingFunc:SBTimingFunctionLinear drawBlock:^(UIBezierPath *path, float t) {
         
         float effectAmount = effectStartAmount + ((effectEndAmount - effectStartAmount)*t);
         
@@ -305,9 +302,20 @@
         
     } completionBlock:^{
         
-        //dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self doButterflyPathsFromPath:nil];
-        //});
+        if (pathNum == self.butterflyPaths.count) {
+            pathNum = 0;
+            
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self doPathsSequentialBasic];
+            });
+        }
+        else{
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self doButterflyPathsFromPath:nil];
+            });
+        }
+
+        
     }];
     
     
@@ -522,27 +530,31 @@
     if (_butterflyPaths) { return _butterflyPaths; }
     
     _butterflyPaths = @[
-                
+            
                     // Butterfly 1
                    [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly1InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
-                                             matchRotation:YES
-                                            rotationOffset:0],
+                                             matchRotation:NO
+                                            rotationOffset:0.61],
+                
                    // Butterfly 2
                    [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly2InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
-                                             matchRotation:YES
-                                            rotationOffset:0],
+                                             matchRotation:NO
+                                             rotationOffset:0.825],
+                 
                    // Butterfly 3
                    [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly3InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
-                                             matchRotation:YES
-                                            rotationOffset:0],
+                                             matchRotation:NO
+                                            rotationOffset:0.785],
+                 
                    // Butterfly 4
                    [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly4InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
-                                             matchRotation:YES
-                                            rotationOffset:0],
+                                             matchRotation:NO
+                                            rotationOffset:0.95],
+               
                    // Butterfly 5
                    [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly5InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
-                                             matchRotation:YES
-                                            rotationOffset:0],
+                                             matchRotation:NO
+                                            rotationOffset:0.975],
                    // Butterfly 6
                    [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly6InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
                                              matchRotation:YES
@@ -561,25 +573,30 @@
     if (_animalPaths) { return _animalPaths; }
     
     _animalPaths = @[
+                     
+                   
+                     
                    // chick
                    [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath chickPathInFrame:[self frameWithWidthPct:0.8 heightPct:0.7 xOffset:0.05 yOffset:0]]
                                              matchRotation:NO
-                                            rotationOffset:0.6],
+                                            rotationOffset:0.8],
                    
                    // chicken
                    [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath chickenPathInFrame:[self frameWithWidthPct:0.9 heightPct:0.6 xOffset:0.05 yOffset:0]]
                                              matchRotation:NO
-                                            rotationOffset:0.6],
+                                            rotationOffset:0.85],
+                   
                    
                    // rhino
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath rhinoPathWithFrame:[self frameWithWidthPct:0.8 heightPct:0.4 xOffset:0 yOffset:0]]
+                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithReverseOfPath:[UIBezierPath rhinoPathWithFrame:[self frameWithWidthPct:0.8 heightPct:0.4 xOffset:0 yOffset:0]]]
                                              matchRotation:NO
-                                            rotationOffset:0.7],
+                                            rotationOffset:0.5],
+                   
                    // elephant
                    [[MorphAnimationInfo alloc]initWithPath:
-                    [UIBezierPath bezierPathWithReverseOfPath:[UIBezierPath elephantPathInFrame:[self frameWithWidthPct:0.9 heightPct:0.6 xOffset:0 yOffset:0]]]
+                    [UIBezierPath bezierPathWithReverseOfPath:[UIBezierPath bezierPathWithReverseOfPath:[UIBezierPath elephantPathInFrame:[self frameWithWidthPct:0.9 heightPct:0.6 xOffset:0 yOffset:0]]]]
                                              matchRotation:NO
-                                            rotationOffset:0.4],
+                                            rotationOffset:0.7],
                    
                    
                    ];
@@ -654,12 +671,5 @@
     return frame;
 
 }
-
-
-
-
-
-
-
 
 @end

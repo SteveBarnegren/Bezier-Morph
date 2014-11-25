@@ -48,6 +48,7 @@
 
 +(UIBezierPath*)plusSignPathWithCentre:(CGPoint)centre scale:(float)scale{
     
+   
     UIBezierPath *path = [[UIBezierPath alloc]init];
     [path moveToPoint:CGPointMake(centre.x -(3*scale), centre.y + (scale))];
     [path addLineToPoint:CGPointMake(centre.x -(3*scale), centre.y - (scale))];
@@ -63,6 +64,7 @@
     [path addLineToPoint:CGPointMake(centre.x -(scale), centre.y + (scale))];
     [path closePath];
     return path;
+    
     
     /*
      UIBezierPath *path = [[UIBezierPath alloc]init];
@@ -81,8 +83,7 @@
      [path closePath];
      return path;
      */
-    
-    
+
 }
 
 +(UIBezierPath*)tPathWithCentre:(CGPoint)centre scale:(float)scale{

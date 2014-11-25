@@ -545,7 +545,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
             
         }
         
-        
+        NSLog(@"auto rotaion offset = %f", closestIndex/(float)path2.count);
         
     }
     else{
