@@ -130,23 +130,23 @@ typedef enum : NSUInteger {
             savePoint = NO;
         }
         else if (!prevPoint) {
-            NSLog(@"move");
+           // NSLog(@"move");
             [outputPath moveToPoint:point.loc];
         }
         else if (prevCurveType == kMoveToPoint) {
-            NSLog(@"move");
+           // NSLog(@"move");
             [outputPath moveToPoint:point.loc];
         }
         else if (prevCurveType == kLineToPoint){
-            NSLog(@"line");
+           // NSLog(@"line");
             [outputPath addLineToPoint:point.loc];
         }
         else if (prevCurveType == kCurveToPoint){
-            NSLog(@"curve");
+           // NSLog(@"curve");
             [outputPath addCurveToPoint:point.loc controlPoint1:prevPoint.cp2 controlPoint2:prevPoint.cp1];
         }
         else if (prevCurveType == kQuadCurveToPoint){
-            NSLog(@"quad curve");
+           // NSLog(@"quad curve");
             [outputPath addQuadCurveToPoint:prevPoint.loc controlPoint:prevPoint.cp1];
         }
         

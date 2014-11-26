@@ -66,76 +66,6 @@
     self.bezierMorphView = [[SBMorphingBezierView alloc]initWithFrame:self.view.frame];
     [self.view addSubview:_bezierMorphView];
 
-    CGPoint middle = CGPointMake(self.view.frame.size.width/2, self.view.frame.size.height/2);
-    CGPoint topLeft = CGPointMake(middle.x - 100, middle.y - 100);
-    CGPoint topRight = CGPointMake(middle.x + 100, middle.y + 100);
-    /*
-    _paths = [NSArray arrayWithObjects:
-             // [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200) cornerRadius:15],
-             //[UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)],
-              [self plusSignPathWithCentre:middle scale:40],
-              [self arrowPathWithCentre:middle scale:50],
-              //[self jigsawPath],
-              //[self rhinoPath],
-
-              [UIBezierPath jigsawPathInFrame:[self frameWithWidthPct:0.5 heightPct:0.4 xOffset:0.05 yOffset:0]],
-              [UIBezierPath rhinoPathWithFrame:[self frameWithWidthPct:0.8 heightPct:0.4 xOffset:0 yOffset:0]],
-              [UIBezierPath elephantPathInFrame:[self frameWithWidthPct:0.9 heightPct:0.6 xOffset:0 yOffset:0]],
-             // [self birdPath],
-
-              [UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)],
-              [self tPathWithCentre:middle scale:40],
-              [UIBezierPath bezierPathWithRect:CGRectMake(middle.x - 10, middle.y- 100, 20, 200)],
-              [UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 10, middle.y - 10, 20, 20)],
-              [UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 125, middle.y - 20, 250, 40)],
-              [UIBezierPath bezierPathWithOvalInRect:CGRectMake(topLeft.x, topLeft.y, 7, 7)],
-              [self plusSignPathWithCentre:topLeft scale:5],
-              [UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 20) cornerRadius:10],
-              [self letterCPathWithCentre:middle],
-             nil];
-     */
-    
-    self.paths = @[
-                   
-                   // Rounded rect
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200) cornerRadius:15]
-                                             matchRotation:YES
-                                            rotationOffset:0],
-                   
-                   // Circle
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)]
-                                             matchRotation:YES
-                                            rotationOffset:0],
-
-
-                   // Plus sign
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath plusSignPathWithCentre:middle scale:40]
-                                             matchRotation:YES
-                                            rotationOffset:0],
-                 
-                   
-                   // T
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath tPathWithCentre:middle scale:40]
-                                             matchRotation:YES
-                                            rotationOffset:0],
-                    
-                    
-                   // arrow
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithReverseOfPath:[UIBezierPath arrowPathWithCentre:middle scale:50]]
-                                             matchRotation:YES
-                                            rotationOffset:0],
-                    
-                   // jigsaw
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithReverseOfPath:[UIBezierPath jigsawPathInFrame:[self frameWithWidthPct:0.5 heightPct:0.4 xOffset:0.05 yOffset:0]]]
-                                             matchRotation:NO
-                                            rotationOffset:0.2],
-                                     
-                   ];
-    
-    
-       //[NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(morphToNextPath) userInfo:nil repeats:NO];
-    
-
     [self doPathsSequentialBasic];
    // [self doAnimalPathsFromPath:[UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)]];
     //[self doButterflyPathsFromPath:[UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)]];
@@ -212,6 +142,8 @@
         
         [[UIColor blackColor]set];
         [path stroke];
+       // path.usesEvenOddFillRule = NO;
+       // [path fill];
         
         
     } completionBlock:^{
@@ -249,6 +181,7 @@
     float effectStartAmount;
     float effectEndAmount;
     
+    MorphAnimationInfo *prevMorphInfo = nil;
     
     if (endPath) {
         prevPath = endPath;
@@ -256,17 +189,59 @@
         effectEndAmount = 1;
     }
     else{
-        prevPath = ((MorphAnimationInfo*)self.butterflyPaths[pathNum-1]).path;
+        prevMorphInfo = (MorphAnimationInfo*)self.butterflyPaths[pathNum-1];
+        prevPath = prevMorphInfo.path;
         effectStartAmount = 1;
         effectEndAmount = 1;
     }
+    
+    float p1OutsideR = 1;
+    float p1OutsideG = 1;
+    float p1OutsideB = 1;
+    float p1MiddleR = 1;
+    float p1MiddleG = 1;
+    float p1MiddleB = 1;
+    float p1InsideR = 1;
+    float p1InsideG = 1;
+    float p1InsideB = 1;
+    
+    if (prevMorphInfo) {
+        p1OutsideR = [((NSDictionary*)prevMorphInfo.data)[@"Outside_R"]floatValue];
+        p1OutsideG = [((NSDictionary*)prevMorphInfo.data)[@"Outside_G"]floatValue];
+        p1OutsideB = [((NSDictionary*)prevMorphInfo.data)[@"Outside_B"]floatValue];
+        
+        p1MiddleR = [((NSDictionary*)prevMorphInfo.data)[@"Middle_R"]floatValue];
+        p1MiddleG = [((NSDictionary*)prevMorphInfo.data)[@"Middle_G"]floatValue];
+        p1MiddleB = [((NSDictionary*)prevMorphInfo.data)[@"Middle_B"]floatValue];
+        
+        p1InsideR = [((NSDictionary*)prevMorphInfo.data)[@"Inside_R"]floatValue];
+        p1InsideG = [((NSDictionary*)prevMorphInfo.data)[@"Inside_G"]floatValue];
+        p1InsideB = [((NSDictionary*)prevMorphInfo.data)[@"Inside_B"]floatValue];
+    }
+    
+    float p2OutsideR = [((NSDictionary*)morphInfo.data)[@"Outside_R"]floatValue];
+    float p2OutsideG = [((NSDictionary*)morphInfo.data)[@"Outside_G"]floatValue];
+    float p2OutsideB = [((NSDictionary*)morphInfo.data)[@"Outside_B"]floatValue];
+    
+    float p2MiddleR = [((NSDictionary*)morphInfo.data)[@"Middle_R"]floatValue];
+    float p2MiddleG = [((NSDictionary*)morphInfo.data)[@"Middle_G"]floatValue];
+    float p2MiddleB = [((NSDictionary*)morphInfo.data)[@"Middle_B"]floatValue];
+
+    float p2InsideR = [((NSDictionary*)morphInfo.data)[@"Inside_R"]floatValue];
+    float p2InsideG = [((NSDictionary*)morphInfo.data)[@"Inside_G"]floatValue];
+    float p2InsideB = [((NSDictionary*)morphInfo.data)[@"Inside_B"]floatValue];
     
     [_bezierMorphView morphFromPath:prevPath toPath:morphInfo.path duration:2 timingFunc:SBTimingFunctionLinear drawBlock:^(UIBezierPath *path, float t) {
         
         float effectAmount = effectStartAmount + ((effectEndAmount - effectStartAmount)*t);
         
+        NSLog(@"effect amount = %f", effectAmount);
+        
         // draw the original path
-        [[UIColor colorWithRed:1 green:0 blue:0 alpha:effectAmount]set]; // red
+        [[UIColor colorWithRed:p1OutsideR + ((p2OutsideR - p1OutsideR)*t)
+                         green:p1OutsideG + ((p2OutsideG - p1OutsideG)*t)
+                          blue:p1OutsideB + ((p2OutsideB - p1OutsideB)*t)
+                         alpha:effectAmount]set]; // red
         //[[UIColor redColor]set];
         [path fill];
         
@@ -283,10 +258,18 @@
             
             switch (i) {
                 case 0:
-                    colour = [UIColor colorWithRed:255/255.0f green:186/255.0f blue:21/255.0f alpha:effectAmount]; // orange
+                    colour = [UIColor colorWithRed:p1MiddleR + ((p2MiddleR - p1MiddleR)*t)
+                                             green:p1MiddleG + ((p2MiddleG - p1MiddleG)*t)
+                                              blue:p1MiddleB + ((p2MiddleB - p1MiddleB)*t)
+                                             alpha:effectAmount]; // red
+
                     break;
                 case 1:
-                    colour = [UIColor colorWithRed:248/255.0f green:240/255.0f blue:12/255.0f alpha:effectAmount]; // yellow
+                    colour = [UIColor colorWithRed:p1InsideR + ((p2InsideR - p1InsideR)*t)
+                                             green:p1InsideG + ((p2InsideG - p1InsideG)*t)
+                                              blue:p1InsideB + ((p2InsideB - p1InsideB)*t)
+                                             alpha:effectAmount];
+
                     break;
                 default:
                     break;
@@ -323,139 +306,7 @@
     
 }
 
--(void)morphToNextPath{
-    
-    // basic sequential
-    
-    /*
-    UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
-    int nextIndex = _pathNum+1;
-    if (nextIndex >= _paths.count) {
-        nextIndex = 0;
-    }
-    UIBezierPath *path2 =[_paths objectAtIndex:nextIndex];
-    
-    [_bezierMorphView morphFromPath:path1 toPath:path2 duration:5];
 
-    
-    _pathNum++;
-    if (_pathNum >= _paths.count) {
-        _pathNum = 0;
-    }
-     
-     */
-    
-    /*
-    // basic random
-    
-    UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
-    
-    int newPathNum;
-    do {
-        newPathNum = arc4random() % _paths.count;
-    } while (newPathNum == _pathNum);
-    
-    UIBezierPath *path2 =[_paths objectAtIndex:newPathNum];
-
-    [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1];
-    
-    _pathNum = newPathNum;
-*/
-    /*
-    // block based (with shadow)
-    
-    //_bezierMorphView.accuracy = 0.3;
-    
-     UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
-     
-     int newPathNum;
-     do {
-     newPathNum = arc4random() % _paths.count;
-     } while (newPathNum == _pathNum);
-     
-     UIBezierPath *path2 =[_paths objectAtIndex:newPathNum];
-    
-    static BOOL onColour1 = YES;
-    onColour1 = !onColour1;
-     
-     [_bezierMorphView morphFromPath:path1 toPath:path2 duration:10 timingFunc:SBTimingFunctionExponentialInOut drawBlock:^(UIBezierPath *path, float t) {
-         
-         UIColor *colour1 = [UIColor colorWithRed:1*t green:0 blue:1-(1*t) alpha:1];
-         UIColor *colour2 = [UIColor colorWithRed:1-(1*t) green:0 blue:1*t alpha:1];
-       
-         [(onColour1?colour1:colour2)set];
-         
-         [path fill];
-
-         [(onColour1?colour2:colour1)set];
-         
-         // draw shadows
-         CGContextRef context = UIGraphicsGetCurrentContext();
-         CGContextAddPath(context, path.CGPath);
-         CGContextSetLineWidth(context, 2.0);
-         CGContextSetBlendMode(context, kCGBlendModeNormal);
-         CGContextSetShadowWithColor(context, CGSizeMake(1.0, 1.0), 2.0, [UIColor blackColor].CGColor);
-         CGContextStrokePath(context);
-         
-       
-     } completionBlock:^{
-         NSLog(@"complete");
-         [self morphToNextPath];
-     }];
-    
-     _pathNum = newPathNum;
-  */
-}
-
--(void)drawTwoRandomPaths{
-    
-    _bezierMorphView.accuracy = 1;
-    _bezierMorphView.matchShapeRotations = YES;
-    _bezierMorphView.adjustForCentreOffset = YES;
-    
-    static int numPaths = 1;
-    static int counter = 0;
-    
-    counter++;
-    
-    if (counter == 2) {
-        numPaths+=5;
-        counter = 0;
-        NSLog(@"%i paths", numPaths);
-    }
-    
-    NSMutableArray *array = [[NSMutableArray alloc]init];
-    NSMutableArray *array2 = [[NSMutableArray alloc]init];
-    
-    for (int i = 0; i < numPaths; i++) {
-        
-        [array addObject:[_paths objectAtIndex:arc4random()%_paths.count]];
-        [array2 addObject:[_paths objectAtIndex:arc4random()%_paths.count]];
-        
-    }
-    
-    [_bezierMorphView morphFromPaths:array toPaths:array2 duration:3 timingFunc:SBTimingFunctionElasticOut drawBlock:^(NSArray *paths, float t) {
-        
-        for (UIBezierPath *path in paths) {
-            
-            // fill
-            [[UIColor orangeColor]set];
-            [path fill];
-            
-            [[UIColor blackColor]set];
-            [path stroke];
-        }
-        
-  
-    } completionBlock:^{
-        
-       
-        [self drawTwoRandomPaths];
-        
-        
-    }];
-    
-}
 
 - (void)didReceiveMemoryWarning
 {
@@ -463,106 +314,138 @@
     // Dispose of any resources that can be recreated.
 }
 
-#pragma mark Path Constructors
-
-
-
--(UIBezierPath*)letterCPathWithCentre:(CGPoint)centre{
-    
-    CGGlyph glyph = 'W';
-    CTFontRef font = CTFontCreateWithName((__bridge CFStringRef)@"Helvetica", 85, NULL);
-    CGAffineTransform transform = CGAffineTransformIdentity;
-    CGPathRef path = CTFontCreatePathForGlyph(font, glyph, &transform);
-    UIBezierPath *bezier = [UIBezierPath bezierPathWithCGPath:path];
-    CGPathRelease(path);
-    CFRelease(font);
-    
-    return bezier;
-    
-}
-
--(void)drawMultipleStrokedBeziers{
-    
-    UIBezierPath *path1 =[_paths objectAtIndex:_pathNum];
-    
-    int newPathNum;
-    do {
-        newPathNum = arc4random() % _paths.count;
-    } while (newPathNum == _pathNum);
-    
-    UIBezierPath *path2 =[_paths objectAtIndex:newPathNum];
-    
-    static BOOL onColour1 = YES;
-    onColour1 = !onColour1;
-    
-    _bezierMorphView.accuracy = 1;
-    _bezierMorphView.antialiasDrawing = YES;
-    
-    [_bezierMorphView morphFromPath:path1 toPath:path2 duration:1 timingFunc:SBTimingFunctionExponentialInOut drawBlock:^(UIBezierPath *path, float t) {
-        
-        
-        const int numCopies = 0;
-        
-        [[UIColor blackColor]set];
-        [path stroke];
-        for (int i = 0; i < numCopies; i++) {
-            UIBezierPath *pathCopy = [UIBezierPath bezierPathWithScaledBezierPath:path aroundPoint:CGPointMake(self.view.frame.size.width/2, self.view.frame.size.height/2) scale: 1 + (0.1 * i)];
-            [pathCopy stroke];
-            
-            
-            
-        }
-     
-        
-    } completionBlock:^{
-        NSLog(@"complete");
-        [self drawMultipleStrokedBeziers];
-    }];
-    
-    _pathNum = newPathNum;
-  
-}
-
 #pragma mark - Paths
+
+-(NSArray*)paths{
+    
+    if (_paths) { return _paths;}
+    
+    CGPoint middle = CGPointMake(self.view.frame.size.width/2, self.view.frame.size.height/2);
+    _paths = @[
+                   
+                   // Rounded rect
+                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithRoundedRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200) cornerRadius:15]
+                                             matchRotation:YES
+                                            rotationOffset:0],
+                   
+                   // Circle
+                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)]
+                                             matchRotation:YES
+                                            rotationOffset:0],
+                   
+                   
+                   // Plus sign
+                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath plusSignPathWithCentre:middle scale:40]
+                                             matchRotation:YES
+                                            rotationOffset:0],
+                   
+                   
+                   // T
+                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath tPathWithCentre:middle scale:40]
+                                             matchRotation:YES
+                                            rotationOffset:0],
+                   
+                   
+                   // arrow
+                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithReverseOfPath:[UIBezierPath arrowPathWithCentre:middle scale:50]]
+                                             matchRotation:YES
+                                            rotationOffset:0],
+                   
+                   // jigsaw
+                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath bezierPathWithReverseOfPath:[UIBezierPath jigsawPathInFrame:[self frameWithWidthPct:0.5 heightPct:0.4 xOffset:0.05 yOffset:0]]]
+                                             matchRotation:NO
+                                            rotationOffset:0.2],
+                   
+                   ];
+    
+    return _paths;
+}
 
 -(NSArray *)butterflyPaths{
     
     if (_butterflyPaths) { return _butterflyPaths; }
     
-    _butterflyPaths = @[
-            
-                    // Butterfly 1
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly1InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
-                                             matchRotation:NO
-                                            rotationOffset:0.61],
-                
-                   // Butterfly 2
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly2InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
-                                             matchRotation:NO
-                                             rotationOffset:0.825],
-                 
-                   // Butterfly 3
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly3InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
-                                             matchRotation:NO
-                                            rotationOffset:0.785],
-                 
-                   // Butterfly 4
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly4InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
-                                             matchRotation:NO
-                                            rotationOffset:0.95],
-               
-                   // Butterfly 5
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly5InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
-                                             matchRotation:NO
-                                            rotationOffset:0.975],
-                   // Butterfly 6
-                   [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly6InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
-                                             matchRotation:YES
-                                            rotationOffset:0],
-                   
-                   
-                   ];
+    NSMutableArray *mutablePaths = [[NSMutableArray alloc]init];
+    
+    // butterfly 1
+    {
+        MorphAnimationInfo * anim = [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly1InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
+                                  matchRotation:NO
+                                 rotationOffset:0.61];
+        anim.data = @{
+                       @"Outside_R" : @(1),  @"Outside_G" : @(0),  @"Outside_B" : @(0),
+                       @"Middle_R" : @(255/255.0f),  @"Middle_G" : @(186/255.0f),  @"Middle_B" : @(21/255.0f), // orange
+                       @"Inside_R" : @(248/255.0f),  @"Inside_G" : @(240/255.0f),  @"Inside_B" : @(12/255.0f), // yellow
+                     };
+        [mutablePaths addObject:anim];
+   
+    }
+    // butterfly 2
+    {
+        MorphAnimationInfo * anim = [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly2InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
+                                                              matchRotation:NO
+                                                             rotationOffset:0.825];
+        anim.data = @{
+                      @"Outside_R" : @(0),  @"Outside_G" : @(1),  @"Outside_B" : @(0),
+                      @"Middle_R" : @(1),  @"Middle_G" : @(0),  @"Middle_B" : @(0),
+                      @"Inside_R" : @(0),  @"Inside_G" : @(0),  @"Inside_B" : @(1),
+                      };
+        [mutablePaths addObject:anim];
+    }
 
+    // butterfly 3
+    {
+        MorphAnimationInfo * anim = [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly3InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
+                                                              matchRotation:NO
+                                                             rotationOffset:0.785];
+        anim.data = @{
+                      @"Outside_R" : @(1),  @"Outside_G" : @(1),  @"Outside_B" : @(0),
+                      @"Middle_R" : @(1),  @"Middle_G" : @(0),  @"Middle_B" : @(1),
+                      @"Inside_R" : @(0),  @"Inside_G" : @(1),  @"Inside_B" : @(0),
+                      };
+        [mutablePaths addObject:anim];
+    }
+
+    // butterfly 4
+    {
+        MorphAnimationInfo * anim = [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly4InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
+                                                              matchRotation:NO
+                                                             rotationOffset:0.95];
+        anim.data = @{
+                      @"Outside_R" : @(0),  @"Outside_G" : @(0),  @"Outside_B" : @(0),
+                      @"Middle_R" : @(0),  @"Middle_G" : @(0.5),  @"Middle_B" : @(1),
+                      @"Inside_R" : @(1),  @"Inside_G" : @(0.5),  @"Inside_B" : @(0),
+                      };
+        [mutablePaths addObject:anim];
+    }
+
+    // butterfly 5
+    {
+        MorphAnimationInfo * anim = [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly5InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
+                                                              matchRotation:NO
+                                                             rotationOffset:0.975];
+        anim.data = @{
+                      @"Outside_R" : @(0.9),  @"Outside_G" : @(0.9),  @"Outside_B" : @(0.9),
+                      @"Middle_R" : @(0.1),  @"Middle_G" : @(0.7),  @"Middle_B" : @(0.2),
+                      @"Inside_R" : @(0.8),  @"Inside_G" : @(0.735),  @"Inside_B" : @(0.386),
+                      };
+        [mutablePaths addObject:anim];
+    }
+
+    // butterfly 6
+    {
+        MorphAnimationInfo * anim = [[MorphAnimationInfo alloc]initWithPath:[UIBezierPath butterFly6InFrame:[self frameWithWidthPct:0.9 heightPct:0.7 xOffset:0 yOffset:0]]
+                                                              matchRotation:YES
+                                                             rotationOffset:0];
+        anim.data = @{
+                      @"Outside_R" : @(0.3657),  @"Outside_G" : @(0.879453),  @"Outside_B" : @(0.26780),
+                      @"Middle_R" : @(0.25690),  @"Middle_G" : @(0.678593),  @"Middle_B" : @(0.265793),
+                      @"Inside_R" : @(0.926),  @"Inside_G" : @(0.278690),  @"Inside_B" : @(0.238),
+                      };
+        [mutablePaths addObject:anim];
+    }
+
+    _butterflyPaths = [NSArray arrayWithArray:mutablePaths];
     
     return _butterflyPaths;
     
@@ -671,5 +554,7 @@
     return frame;
 
 }
+
+
 
 @end

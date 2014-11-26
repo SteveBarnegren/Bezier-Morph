@@ -12,6 +12,7 @@
 @property (nonatomic, strong) UIBezierPath *path;
 @property BOOL automatchRotation;
 @property float rotationOffset;
+@property NSObject *data;
 @end
 
 
