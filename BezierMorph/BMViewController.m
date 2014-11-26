@@ -17,8 +17,6 @@
 #import "UIBezierPath+ButterflyPaths.h"
 #import "UIBezierPath+BasicShapePaths.h"
 
-@import CoreText; // get rid of the core text crap
-
 #pragma mark - morphAnimation
 
 @implementation MorphAnimationInfo
