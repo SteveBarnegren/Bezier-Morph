@@ -10,6 +10,8 @@
 	<string>BezierMorph</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
+		<key>8FCA7571-DBC5-40D9-BC52-3C7FB280DC1D</key>
+		<string>https://bitbucket.org/SteveBarnegren/beziermorph.git</string>
 		<key>DA7C834C3E47901D44CD27571DA508D35760C429</key>
 		<string>https://bitbucket.org/SteveBarnegren/beziermorph.git</string>
 	</dict>
@@ -17,6 +19,8 @@
 	<string>BezierMorph.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
+		<key>8FCA7571-DBC5-40D9-BC52-3C7FB280DC1D</key>
+		<string>../../../BezierMorph</string>
 		<key>DA7C834C3E47901D44CD27571DA508D35760C429</key>
 		<string>../..</string>
 	</dict>
@@ -33,6 +37,14 @@
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
 			<string>DA7C834C3E47901D44CD27571DA508D35760C429</string>
+			<key>IDESourceControlWCCName</key>
+			<string>Bezier%20Morph</string>
+		</dict>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>8FCA7571-DBC5-40D9-BC52-3C7FB280DC1D</string>
 			<key>IDESourceControlWCCName</key>
 			<string>BezierMorph</string>
 		</dict>
