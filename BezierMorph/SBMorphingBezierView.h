@@ -63,6 +63,9 @@ typedef void (^CompletionBlock)();
 @property BOOL  adjustForCentreOffset;
 @property BOOL  antialiasDrawing;
 
+// Draw Static Path
+-(void)drawStaticPath:(UIBezierPath*)path;
+
 // Morphing
 -(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration timingFunc:(SBTimingFunctions)tf;
 -(void)morphFromPath:(UIBezierPath*)path1 toPath:(UIBezierPath*)path2 duration:(float)duration;

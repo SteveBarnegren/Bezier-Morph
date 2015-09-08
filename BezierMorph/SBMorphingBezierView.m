@@ -145,7 +145,17 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
 
 #pragma mark ---- Bezier Morph View ----
 
+typedef enum : NSUInteger {
+    PathStateSingleStaticPath,
+    PathStateAnimateSinglePath,
+    PathStateAnimateMultiplePaths,
+} e_PathsState;
+
 @implementation SBMorphingBezierView{
+    
+    /*
+     NOTE TO SELF - Change these to properties
+     */
     
     NSMutableArray *_connectionsArray;
     UIBezierPath *_currentPath;
@@ -170,7 +180,9 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     NSMutableArray *_multiplePathsConnectionsArray;
     NSMutableArray *_multiplePathsUsingReversedConnectionsArray;
     DrawBlockMP _drawBlockMP;
-
+    
+    e_PathsState _pathsState;
+    UIBezierPath *_staticPath;
 }
 
 -(id)initWithFrame:(CGRect)frame{
@@ -212,6 +224,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
         // multiple paths
         _drawBlockMP = NULL;
         _isDrawingMultiplePaths = NO;
+        _pathsState = PathStateAnimateSinglePath;
         
 
     }
@@ -246,6 +259,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     _completionBlock = NULL;
     _timingFunction = SBTimingFunctionLinear;
     _isDrawingMultiplePaths = NO;
+    _pathsState = PathStateAnimateSinglePath;
     
 }
 
@@ -292,8 +306,17 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     _timingFunction = tf;
     
     _isDrawingMultiplePaths = YES;
+    _pathsState = PathStateAnimateMultiplePaths;
 
     
+}
+
+-(void)drawStaticPath:(UIBezierPath *)path{
+    
+    [self stopMorphing];
+    _staticPath = path;
+    
+    _pathsState = PathStateSingleStaticPath;
 }
 
 
@@ -334,12 +357,14 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     CGContextSetShouldAntialias(context, _antialiasDrawing);
     CGContextSetAllowsAntialiasing(context, _antialiasDrawing);
     
-    
-    if (_isDrawingMultiplePaths) {
+    if (_pathsState == PathStateAnimateMultiplePaths) {
         [self drawRectForMultiplePaths];
     }
-    else{
+    else if(_pathsState == PathStateAnimateSinglePath){
         [self drawRectForSinglePath];
+    }
+    else{
+        [self drawRectForSingleStaticPath];
     }
     
 }
@@ -454,6 +479,26 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     }
     
     _drawBlockMP(pathsArray, t);
+    
+}
+
+-(void)drawRectForSingleStaticPath{
+    
+    if (!_useBlockDrawing) {
+        
+        // fill
+        [_fillColour set];
+        [_staticPath fill];
+        
+        // stroke
+        [_strokeColour set];
+        _staticPath.lineWidth = _strokeWidth;
+        [_staticPath stroke];
+    }
+    else{
+        _drawBlock(_staticPath, 0);
+    }
+
     
 }
 
@@ -764,7 +809,7 @@ void MyCGPathApplierFunc (void *info, const CGPathElement *element) {
     
 }
 
-// This gets called a lot. Is a function to avoid messaging overhead
+// This gets called A LOT. Is a function to avoid messaging overhead (still probably an unnecessary optimisation)
 float calculatePointsDistance(CGPoint p1, CGPoint p2){
     
     return fabs(sqrtf(((p1.x - p2.x)*(p1.x - p2.x))+((p1.y - p2.y)*(p1.y - p2.y))));

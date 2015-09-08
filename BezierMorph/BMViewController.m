@@ -63,8 +63,12 @@
     
     self.bezierMorphView = [[SBMorphingBezierView alloc]initWithFrame:self.view.frame];
     [self.view addSubview:_bezierMorphView];
+    
+    [self.bezierMorphView drawStaticPath:[UIBezierPath bezierPathWithOvalInRect:CGRectMake(50, 50, 60, 80)]];
 
-    [self doPathsSequentialBasic];
+    [self performSelector:@selector(doPathsSequentialBasic) withObject:nil afterDelay:5];
+    
+   // [self doPathsSequentialBasic];
    // [self doAnimalPathsFromPath:[UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)]];
     //[self doButterflyPathsFromPath:[UIBezierPath bezierPathWithOvalInRect:CGRectMake(middle.x - 100, middle.y - 100, 200, 200)]];
     
